@@ -1,0 +1,7 @@
+.DS_Store
+node_modules/
+.env*
+*.log
+
+# Talk notes are local-only — not committed
+talk/

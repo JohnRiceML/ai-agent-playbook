@@ -1,0 +1,119 @@
+# CLAUDE.md — Your Project Constitution
+
+<!--
+  This is a starter template. Copy it to the root of your project and customize.
+
+  IMPORTANT: Keep this file under 60 lines. Claude has a ~150 instruction budget
+  before quality degrades uniformly. Every line here counts.
+
+  For detailed, context-specific rules, use .claude/rules/*.md with path-scoped
+  frontmatter (see advanced-patterns.md in the playbook).
+
+  Think of this as the employee handbook for your AI agents.
+  Only add context Claude genuinely lacks — your commands, your conventions,
+  your architecture. Don't teach it things it already knows.
+-->
+
+## Critical Rules
+
+<!-- Lead with the most dangerous operations. What should an agent NEVER do? -->
+
+- **NEVER** run database migrations without explicit user permission
+- **NEVER** delete files without asking first
+- **NEVER** push to main/master directly
+- **NEVER** commit secrets, API keys, or credentials
+- **NEVER** install new dependencies without explaining why
+
+## Project Overview
+
+<!-- One paragraph. What is this project? What does it do? -->
+
+This is a [describe your project]. It uses [tech stack].
+
+**Tech Stack:**
+- Framework: [e.g., Next.js 15, Django 5, Rails 8]
+- Language: [e.g., TypeScript, Python, Ruby]
+- Database: [e.g., PostgreSQL via Prisma, SQLite]
+- Styling: [e.g., Tailwind CSS v4]
+- Testing: [e.g., Vitest, Pytest, RSpec]
+
+## Architecture
+
+<!-- Where does code live? What are the key directories? -->
+
+```
+src/
+  app/          # Pages and routes
+  lib/          # Business logic (pure functions, testable)
+  components/   # UI components
+  api/          # API routes
+```
+
+**Key principle:** Business logic lives in `lib/`, not in components or API routes. Keep components thin.
+
+## Commands
+
+<!-- What commands should agents know about? -->
+
+```bash
+# Development
+npm run dev              # Start dev server
+
+# Testing — run these BEFORE committing
+npm test                 # Run all tests
+npx tsc --noEmit         # Type check (must pass with zero errors)
+npm run lint             # Lint check
+
+# Build
+npm run build            # Production build (must pass before PR)
+```
+
+## Code Conventions
+
+<!-- Your project's specific patterns. Only include what differs from defaults. -->
+
+- Use named exports, not default exports
+- Prefer `async/await` over `.then()` chains
+- Error messages should be user-friendly, not stack traces
+- All API responses follow the shape: `{ success: boolean, data?: T, error?: string }`
+
+## Testing Requirements
+
+<!-- What must be tested? How? -->
+
+- Every function in `lib/` should have a corresponding `.test.ts` file
+- Test the happy path first, then edge cases
+- Use descriptive test names: `it('returns 0 when no mentions found')`
+- Mock external APIs, never call them in tests
+- Run `npm test` before every commit
+
+## Definition of Done
+
+A feature is complete when:
+1. Types pass (`npx tsc --noEmit` — zero errors)
+2. Tests pass (`npm test`)
+3. Linter passes (`npm run lint`)
+4. Build succeeds (`npm run build`)
+5. The change is reviewable — clear commit messages, small diffs
+6. No new warnings introduced
+
+## Working with This Codebase
+
+<!-- Specific gotchas, patterns, or things Claude should know -->
+
+<!-- Example entries — replace with your own:
+- The scoring formula is defined in `lib/scoring.ts` — all UI imports from there
+- Never bypass the validation middleware in API routes
+- The `User` model requires `projectId` scoping on every query (multi-tenant)
+-->
+
+## File Restrictions
+
+<!-- Files that agents should never modify without asking -->
+
+<!-- Example:
+- `prisma/schema.prisma` — database schema changes need human review
+- `**/migrations/**` — never auto-generate migrations
+- `.env*` — never modify environment files
+- `package.json` — ask before adding dependencies
+-->
