@@ -3,5 +3,4 @@ node_modules/
 .env*
 *.log
 
-# Talk notes are local-only — not committed
-talk/
+# Talk slide deck and assets are public

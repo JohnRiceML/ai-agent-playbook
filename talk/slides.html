@@ -1,0 +1,2672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building with a Team of AI Developer Agents</title>
+<style>
+  :root {
+    --bg: #0a0a10;
+    --bg2: #0f0f18;
+    --bg-card: #151520;
+    --bg-card-hover: #1a1a28;
+    --border: #222235;
+    --border-light: #2a2a40;
+    --text: #ededf0;
+    --text-muted: #7c7c96;
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --accent3: #a78bfa;
+    --accent-glow: rgba(99, 102, 241, 0.12);
+    --accent-glow-strong: rgba(99, 102, 241, 0.25);
+    --green: #34d399;
+    --green-dim: rgba(52, 211, 153, 0.12);
+    --red: #f87171;
+    --red-dim: rgba(248, 113, 113, 0.12);
+    --yellow: #fbbf24;
+    --yellow-dim: rgba(251, 191, 36, 0.12);
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  }
+
+  /* Light theme */
+  [data-theme="light"] {
+    --bg: #f8f8fc;
+    --bg2: #f0f0f6;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f5f5fa;
+    --border: #e0e0ec;
+    --border-light: #d0d0de;
+    --text: #1a1a2e;
+    --text-muted: #6b6b84;
+    --accent: #4f46e5;
+    --accent2: #7c3aed;
+    --accent3: #9333ea;
+    --accent-glow: rgba(79, 70, 229, 0.08);
+    --accent-glow-strong: rgba(79, 70, 229, 0.18);
+    --green: #059669;
+    --green-dim: rgba(5, 150, 105, 0.08);
+    --red: #dc2626;
+    --red-dim: rgba(220, 38, 38, 0.08);
+    --yellow: #d97706;
+    --yellow-dim: rgba(217, 119, 6, 0.08);
+  }
+  [data-theme="light"] .slide-hero {
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(79,70,229,0.06) 0%, transparent 70%);
+  }
+  [data-theme="light"] .slide-data {
+    background: radial-gradient(ellipse 60% 50% at 30% 60%, rgba(220,38,38,0.04) 0%, transparent 70%);
+  }
+  [data-theme="light"] .slide-positive {
+    background: radial-gradient(ellipse 60% 50% at 70% 40%, rgba(5,150,105,0.04) 0%, transparent 70%);
+  }
+  [data-theme="light"] .invert { filter: none !important; }
+  [data-theme="light"] .project-icon {
+    background: rgba(0, 0, 0, 0.04);
+  }
+  [data-theme="light"] .screenshot {
+    box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06);
+  }
+  [data-theme="light"] #overview {
+    background: rgba(248, 248, 252, 0.97);
+  }
+  [data-theme="light"] #notes-panel {
+    background: rgba(240, 240, 246, 0.95);
+    border-top-color: var(--border);
+  }
+  [data-theme="light"] .code {
+    background: #f4f4f8;
+    border-color: var(--border);
+  }
+  [data-theme="light"] .card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  [data-theme="light"] .card:hover {
+    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  }
+  [data-theme="light"] .card-glow {
+    box-shadow: 0 0 24px rgba(79, 70, 229, 0.1), 0 1px 3px rgba(0,0,0,0.04);
+  }
+  [data-theme="light"] #progress {
+    box-shadow: 0 0 12px rgba(79, 70, 229, 0.15);
+  }
+  [data-theme="light"] #mug-wrap svg path[fill="url(#mug-body-grad)"] {
+    stroke: rgba(0,0,0,0.12);
+  }
+  [data-theme="light"] #mug-wrap svg line {
+    stroke: rgba(0,0,0,0.18);
+  }
+  [data-theme="light"] #mug-wrap svg path[fill="none"] {
+    stroke: rgba(0,0,0,0.12);
+  }
+  [data-theme="light"] #mug-body-grad-light { display: block; }
+  [data-theme="light"] #steam-container svg {
+    opacity: 0.35;
+  }
+  [data-theme="light"] .steam-wisp {
+    stroke: rgba(0,0,0,0.25) !important;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    overflow: hidden;
+    cursor: default;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Progress bar */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; z-index: 100;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 12px var(--accent-glow-strong);
+  }
+
+  /* Slide counter */
+  #counter {
+    position: fixed; bottom: 28px; right: 36px; z-index: 100;
+    font-size: 0.8rem; color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.05em;
+  }
+
+  /* Slides */
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: 60px 80px;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.18s ease, visibility 0.18s;
+  }
+  .slide.active { opacity: 1; visibility: visible; }
+
+  .slide-inner {
+    max-width: 1120px; width: 100%;
+    text-align: left;
+  }
+  .slide-inner.center { text-align: center; }
+
+  /* Subtle background patterns per slide type */
+  .slide-hero {
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(99,102,241,0.08) 0%, transparent 70%);
+  }
+  .slide-data {
+    background: radial-gradient(ellipse 60% 50% at 30% 60%, rgba(248,113,113,0.05) 0%, transparent 70%);
+  }
+  .slide-positive {
+    background: radial-gradient(ellipse 60% 50% at 70% 40%, rgba(52,211,153,0.05) 0%, transparent 70%);
+  }
+
+  /* Typography */
+  h1 { font-size: 3.4rem; font-weight: 800; line-height: 1.12; margin-bottom: 20px; letter-spacing: -0.02em; }
+  h2 { font-size: 2.5rem; font-weight: 700; line-height: 1.2; margin-bottom: 24px; letter-spacing: -0.015em; }
+  h3 {
+    font-size: 0.85rem; font-weight: 600; color: var(--accent);
+    margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.12em;
+  }
+  p, li { font-size: 1.45rem; line-height: 1.6; color: var(--text); }
+  .subtitle { font-size: 1.35rem; color: var(--text-muted); margin-bottom: 8px; }
+  .small { font-size: 1.05rem; color: var(--text-muted); }
+
+  ul { list-style: none; padding: 0; }
+  ul li { padding: 6px 0; padding-left: 28px; position: relative; }
+  ul li::before {
+    content: ''; position: absolute; left: 0; top: 15px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+  }
+
+  .accent { color: var(--accent); }
+  .accent2 { color: var(--accent2); }
+  .green { color: var(--green); }
+  .red { color: var(--red); }
+  .yellow { color: var(--yellow); }
+  .bold { font-weight: 700; }
+  .semibold { font-weight: 600; }
+  .highlight {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+  }
+  .highlight-warm {
+    background: linear-gradient(90deg, var(--yellow), #f97316);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+  }
+
+  /* Big stat */
+  .big-stat {
+    font-size: 4.5rem; font-weight: 900; line-height: 1.05;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+    letter-spacing: -0.03em;
+  }
+
+  /* Code blocks */
+  .code {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 22px 26px; margin: 14px 0;
+    font-family: var(--mono); font-size: 1.05rem; line-height: 1.75;
+    color: var(--text); white-space: pre-wrap; text-align: left;
+    overflow-x: auto;
+  }
+  .code .kw { color: var(--accent); font-weight: 600; }
+  .code .str { color: var(--green); }
+  .code .cmt { color: var(--text-muted); }
+  .code .warn { color: var(--red); font-weight: 700; }
+
+  /* Tables */
+  table {
+    width: 100%; border-collapse: collapse; margin: 16px 0;
+    font-size: 1.15rem;
+  }
+  th {
+    text-align: left; padding: 12px 16px;
+    border-bottom: 2px solid var(--border-light);
+    color: var(--accent); font-weight: 600; font-size: 1rem;
+    letter-spacing: 0.02em;
+  }
+  td {
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+
+  /* Grid layout */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 16px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin-top: 16px; }
+
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px;
+    transition: border-color 0.25s, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: var(--border-light);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  }
+  .card-glow {
+    border-color: var(--accent);
+    box-shadow: 0 0 24px var(--accent-glow), inset 0 1px 0 rgba(99,102,241,0.1);
+  }
+  .card h3 { font-size: 1.1rem; margin-bottom: 10px; }
+  .card p { font-size: 1.1rem; }
+
+  /* Quote */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 16px 24px; margin: 20px 0;
+    font-size: 1.4rem; font-style: italic;
+    color: var(--text-muted);
+    background: var(--accent-glow);
+    border-radius: 0 10px 10px 0;
+  }
+
+  /* Org chart */
+  .org-chart {
+    display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 12px;
+  }
+  .org-top {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; padding: 12px 28px; border-radius: 10px;
+    font-size: 1.1rem; font-weight: 700;
+    box-shadow: 0 4px 20px var(--accent-glow-strong);
+  }
+  .org-line { width: 2px; height: 16px; background: var(--border-light); }
+  .org-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .org-node {
+    background: var(--bg-card); border: 1px solid var(--border);
+    padding: 7px 14px; border-radius: 8px;
+    font-size: 0.88rem; color: var(--text);
+  }
+
+  /* Flow diagram */
+  .flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
+  .flow-step {
+    background: var(--bg-card); border: 1px solid var(--border);
+    padding: 12px 18px; border-radius: 12px;
+    font-size: 1.05rem; text-align: center;
+  }
+  .flow-step.active-step {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+    box-shadow: 0 0 16px var(--accent-glow);
+  }
+  .flow-arrow { color: var(--accent); font-size: 1.3rem; opacity: 0.7; }
+
+  /* Layers */
+  .layers { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+  .layer {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    padding: 14px 18px; border-radius: 12px;
+    font-size: 1.1rem;
+  }
+  .layer-num {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; width: 34px; height: 34px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.95rem; flex-shrink: 0;
+  }
+
+  /* Screenshot */
+  .screenshot {
+    border-radius: 12px; border: 1px solid var(--border);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03);
+    max-width: 100%; height: auto;
+  }
+
+  /* Tag/pill */
+  .tag {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 0.85rem; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .tag-accent { background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(99,102,241,0.3); }
+  .tag-green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+  .tag-yellow { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(251,191,36,0.3); }
+
+  /* Project logo row */
+  .project-row {
+    display: flex; align-items: center; gap: 28px;
+    justify-content: center; flex-wrap: wrap;
+    margin-top: 24px;
+  }
+  .project-badge {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    opacity: 0.85; transition: opacity 0.2s;
+  }
+  .project-badge:hover { opacity: 1; }
+  .project-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    object-fit: contain; background: rgba(255,255,255,0.06);
+    padding: 4px;
+  }
+  .project-icon.invert { filter: brightness(0) invert(1); }
+  .project-badge span {
+    font-size: 0.75rem; color: var(--text-muted); font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  /* Product card with icon */
+  .product-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+  }
+  .product-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    object-fit: contain; flex-shrink: 0;
+  }
+  .product-icon.invert { filter: brightness(0) invert(1); }
+
+  /* Timeline dot */
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline::before {
+    content: ''; position: absolute; left: 8px; top: 8px; bottom: 8px;
+    width: 2px; background: var(--border-light);
+  }
+  .timeline-item { position: relative; margin-bottom: 16px; }
+  .timeline-item::before {
+    content: ''; position: absolute; left: -24px; top: 8px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: 2px solid var(--bg);
+  }
+
+  /* Slide overview grid */
+  #overview {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(10, 10, 16, 0.97);
+    display: none; overflow-y: auto; padding: 40px;
+    backdrop-filter: blur(8px);
+  }
+  #overview.visible { display: block; }
+  #overview-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px; max-width: 1400px; margin: 0 auto;
+  }
+  .overview-thumb {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    aspect-ratio: 16/9; display: flex; flex-direction: column; justify-content: center;
+    overflow: hidden;
+  }
+  .overview-thumb:hover { border-color: var(--accent); }
+  .overview-thumb.current { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow-strong); }
+  .overview-thumb .thumb-num { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.05em; }
+  .overview-thumb .thumb-title { font-size: 0.9rem; font-weight: 600; }
+
+  /* Presenter notes */
+  #notes-panel {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(21, 21, 32, 0.95); border-top: 1px solid var(--border);
+    padding: 16px 32px; font-size: 1rem; color: var(--text-muted);
+    z-index: 150; display: none; max-height: 180px; overflow-y: auto;
+    backdrop-filter: blur(12px);
+  }
+  #notes-panel.visible { display: block; }
+  #notes-panel .notes-label {
+    color: var(--accent); font-weight: 600; margin-bottom: 6px;
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+  }
+
+  /* ---- Framer-style entrance animations ---- */
+  @keyframes anim-up {
+    from { opacity: 0; transform: translateY(32px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes anim-up-soft {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes anim-scale-in {
+    from { opacity: 0; transform: scale(0.88) translateY(14px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes anim-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes anim-pop {
+    0% { opacity: 0; transform: scale(0.6); }
+    60% { transform: scale(1.04); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* Direct children of slide-inner start hidden */
+  .slide .slide-inner > * {
+    opacity: 0;
+  }
+
+  /* When slide is active, children stagger in */
+  .slide.active .slide-inner > * {
+    animation: anim-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--i, 0) * 0.09s + 0.06s);
+  }
+
+  /* Grids: children stagger within their container */
+  .slide .grid-2 > *,
+  .slide .grid-3 > *,
+  .slide .grid-4 > * {
+    opacity: 0;
+  }
+  .slide.active .grid-2 > *,
+  .slide.active .grid-3 > *,
+  .slide.active .grid-4 > * {
+    animation: anim-scale-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--gi, 0) * 0.08s + 0.12s);
+  }
+
+  /* Flow steps stagger left-to-right */
+  .slide .flow > * { opacity: 0; }
+  .slide.active .flow > * {
+    animation: anim-up-soft 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--fi, 0) * 0.06s + 0.12s);
+  }
+
+  /* Layer items cascade down */
+  .slide .layers > * { opacity: 0; }
+  .slide.active .layers > * {
+    animation: anim-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--li, 0) * 0.1s + 0.1s);
+  }
+
+  /* Org chart cascades */
+  .slide .org-chart > * { opacity: 0; }
+  .slide.active .org-chart > * {
+    animation: anim-up-soft 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--oi, 0) * 0.09s + 0.1s);
+  }
+
+  /* Table rows */
+  .slide tr { opacity: 0; }
+  .slide.active tr {
+    animation: anim-up-soft 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--ti, 0) * 0.06s + 0.1s);
+  }
+
+  /* Blockquotes get a soft delayed entrance */
+  .slide blockquote { opacity: 0; }
+  .slide.active blockquote {
+    animation: anim-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: 0.45s;
+  }
+
+  /* Project badges stagger */
+  .slide .project-row > * { opacity: 0; }
+  .slide.active .project-row > * {
+    animation: anim-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--pi, 0) * 0.07s + 0.35s);
+  }
+
+  /* Timeline items cascade */
+  .slide .timeline-item { opacity: 0; }
+  .slide.active .timeline-item {
+    animation: anim-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--tli, 0) * 0.1s + 0.12s);
+  }
+
+  /* Avatar special entrance */
+  .slide .avatar-entrance { opacity: 0; }
+  .slide.active .avatar-entrance {
+    animation: anim-pop 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: 0.1s;
+  }
+
+  /* Code blocks slide in */
+  .slide .code { opacity: 0; }
+  .slide.active .code {
+    animation: anim-up-soft 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: 0.2s;
+  }
+
+  /* Theme toggle */
+  #theme-toggle {
+    position: fixed; bottom: 28px; left: 36px; z-index: 100;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--bg-card); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1rem; transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+  }
+  #theme-toggle:hover { border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="counter"></div>
+<div id="theme-toggle" title="Toggle light/dark mode (L)">&#9790;</div>
+
+<!-- ==================== OPENING ==================== -->
+
+<!-- Slide 1: Title -->
+<section class="slide slide-hero" data-title="Title">
+  <!-- SVG clip for mug interior -->
+  <svg width="0" height="0" style="position:absolute;">
+    <defs>
+      <clipPath id="mug-clip" clipPathUnits="objectBoundingBox">
+        <path d="M0.05,0.03 L0.95,0.03 Q0.99,0.03 0.99,0.07 L0.96,0.91 Q0.96,0.98 0.87,0.98 L0.13,0.98 Q0.04,0.98 0.04,0.91 L0.01,0.07 Q0.01,0.03 0.05,0.03 Z"/>
+      </clipPath>
+    </defs>
+  </svg>
+
+  <!-- Drop canvas — full slide, renders drops falling from top of window -->
+  <canvas id="drop-canvas" style="position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:1;"></canvas>
+
+  <!-- Coffee mug on right side -->
+  <div id="mug-wrap" style="position:absolute; right:6%; top:50%; transform:translateY(-50%); width:28%; height:58%; z-index:0;">
+    <!-- Canvas: mug body area (left 77%) -->
+    <canvas id="coffee-canvas" style="position:absolute; left:0; top:0; width:77%; height:100%;"></canvas>
+    <!-- Mug outline + handle SVG -->
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:2; overflow:visible;">
+      <defs>
+        <linearGradient id="mug-body-grad" x1="0" y1="0" x2="0.77" y2="0">
+          <stop offset="0%" stop-color="rgba(60,60,90,0.15)"/>
+          <stop offset="50%" stop-color="rgba(30,30,50,0.05)"/>
+          <stop offset="100%" stop-color="rgba(60,60,90,0.18)"/>
+        </linearGradient>
+        <linearGradient id="mug-body-grad-light" x1="0" y1="0" x2="0.77" y2="0">
+          <stop offset="0%" stop-color="rgba(80,80,120,0.12)"/>
+          <stop offset="50%" stop-color="rgba(60,60,100,0.04)"/>
+          <stop offset="100%" stop-color="rgba(80,80,120,0.14)"/>
+        </linearGradient>
+      </defs>
+      <!-- Body fill (subtle ceramic look) -->
+      <path d="M4,3 L73,3 Q76.5,3 76.5,7 L74,91 Q74,98 67,98 L10,98 Q3,98 3,91 L0.5,7 Q0.5,3 4,3 Z"
+            fill="url(#mug-body-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="0.4"/>
+      <!-- Rim -->
+      <line x1="0.5" y1="3.5" x2="76.5" y2="3.5" stroke="rgba(255,255,255,0.16)" stroke-width="1.2" stroke-linecap="round"/>
+      <!-- Handle -->
+      <path d="M76.5,22 C 92,22 94,50 94,50 C 94,50 92,78 76.5,78"
+            fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2.8" stroke-linecap="round"/>
+    </svg>
+    <!-- Steam wisps -->
+    <div id="steam-container" style="position:absolute; left:0; top:-15%; width:77%; height:20%; pointer-events:none; z-index:3; overflow:visible;">
+      <svg viewBox="0 0 200 60" preserveAspectRatio="xMidYMax meet" style="width:100%; height:100%; opacity:0.25;">
+        <path class="steam-wisp" d="M60,58 Q55,40 65,28 Q75,16 68,2" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round">
+          <animate attributeName="d" dur="4s" repeatCount="indefinite" values="M60,58 Q55,40 65,28 Q75,16 68,2;M60,58 Q68,42 58,30 Q48,18 55,2;M60,58 Q55,40 65,28 Q75,16 68,2"/>
+          <animate attributeName="opacity" dur="4s" repeatCount="indefinite" values="0.5;0.2;0.5"/>
+        </path>
+        <path class="steam-wisp" d="M100,58 Q108,38 95,24 Q82,12 92,2" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round">
+          <animate attributeName="d" dur="5s" repeatCount="indefinite" values="M100,58 Q108,38 95,24 Q82,12 92,2;M100,58 Q92,40 105,26 Q118,14 108,2;M100,58 Q108,38 95,24 Q82,12 92,2"/>
+          <animate attributeName="opacity" dur="5s" repeatCount="indefinite" values="0.4;0.15;0.4"/>
+        </path>
+        <path class="steam-wisp" d="M140,58 Q135,42 145,30 Q155,18 148,2" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1" stroke-linecap="round">
+          <animate attributeName="d" dur="4.5s" repeatCount="indefinite" values="M140,58 Q135,42 145,30 Q155,18 148,2;M140,58 Q148,40 138,28 Q128,16 135,2;M140,58 Q135,42 145,30 Q155,18 148,2"/>
+          <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" values="0.35;0.1;0.35"/>
+        </path>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Title content on left -->
+  <div class="slide-inner" style="position:relative; z-index:2; text-align:left; max-width:55%; margin-right:auto; margin-left:5%;">
+    <h3 style="--i:0">☕ No-Code Coffee &middot; February 19, 2026</h3>
+    <h1 style="--i:1; margin-top:8px;">Building with a Team of<br><span class="highlight">AI Developer Agents</span></h1>
+    <!-- Avatar + name + bio in a row -->
+    <div style="display:flex; align-items:center; gap:20px; margin-top:28px; --i:2;">
+      <a href="https://github.com/JohnRiceML" target="_blank" rel="noopener" class="avatar-entrance" style="text-decoration:none; display:block; flex-shrink:0;">
+        <img src="avatar-john.png" alt="John Rice" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); box-shadow:0 0 20px var(--accent-glow-strong); transition:border-color 0.2s, transform 0.3s; cursor:pointer;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+      </a>
+      <div>
+        <p style="font-size:1.4rem; font-weight:600; margin:0;">John Rice</p>
+        <p class="small" style="margin-top:4px;">15 years in software &middot; Startup builder &middot; AI agent architect</p>
+        <a href="https://github.com/JohnRiceML" target="_blank" rel="noopener" style="text-decoration:none; color:var(--text-muted); font-size:0.85rem; display:inline-flex; align-items:center; gap:5px; margin-top:4px; transition:color 0.2s;">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          github.com/JohnRiceML
+        </a>
+      </div>
+    </div>
+    <div class="project-row" style="justify-content:flex-start; --i:3; margin-top:20px;">
+      <div class="project-badge">
+        <img src="icon-peekaboo.png" alt="Peekaboo" class="project-icon">
+        <span>Peekaboo</span>
+      </div>
+      <div class="project-badge">
+        <img src="icon-tickettopr.png" alt="TicketToPR" class="project-icon">
+        <span>TicketToPR</span>
+      </div>
+      <div class="project-badge">
+        <img src="icon-subredditsignals.png" alt="SubredditSignals" class="project-icon">
+        <span>SubredditSignals</span>
+      </div>
+      <div class="project-badge">
+        <img src="icon-narrativenooks.png" alt="Narrative Nooks" class="project-icon">
+        <span>Narrative Nooks</span>
+      </div>
+      <div class="project-badge">
+        <img src="icon-locala.webp" alt="Locala" class="project-icon invert">
+        <span>Locala</span>
+      </div>
+      <div class="project-badge">
+        <img src="icon-mochi.png" alt="Mochi" class="project-icon">
+        <span>Mochi</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 2: About Me -->
+<section class="slide" data-title="About Me" data-notes="Establish credibility. 15 years, not a newcomer. Startup DNA. Then pivot to 'here's what changed.'">
+  <div class="slide-inner">
+    <h3>Who Am I</h3>
+    <h2>15 years building software in startups</h2>
+    <div class="grid-2" style="margin-top: 20px;">
+      <div class="timeline">
+        <div class="timeline-item">
+          <p style="font-size: 1.2rem;" class="bold">Full-stack engineer</p>
+          <p class="small">15 years across startups, agencies, and enterprise</p>
+        </div>
+        <div class="timeline-item">
+          <p style="font-size: 1.2rem;" class="bold">Startup builder</p>
+          <p class="small">6+ SaaS products shipped &mdash; Peekaboo, TicketToPR, SubredditSignals, Narrative Nooks, Locala, Mochi</p>
+        </div>
+        <div class="timeline-item">
+          <p style="font-size: 1.2rem;" class="bold">Consulting</p>
+          <p class="small">Enterprise SEO &amp; local visibility tools (Next.js, real API integrations)</p>
+        </div>
+        <div class="timeline-item">
+          <p style="font-size: 1.2rem;" class="bold">Now: AI agent architecture</p>
+          <p class="small">Building products with teams of specialized AI agents</p>
+        </div>
+      </div>
+      <div>
+        <div class="card card-glow" style="margin-bottom: 16px;">
+          <p class="accent semibold" style="font-size: 1rem;">The realization</p>
+          <p style="font-size: 1.2rem; margin-top: 10px;">
+            "I've been writing code for 15 years. But last year, I stopped writing code &mdash; and started <span class="accent bold">managing agents</span> that write it for me."
+          </p>
+        </div>
+        <div class="card">
+          <p class="small" style="font-size: 1rem;">Not a newcomer experimenting with AI.<br>An experienced engineer who changed his entire workflow.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 3: The Hook -->
+<section class="slide slide-hero" data-title="The Hook" data-notes="Pause after '5 products.' Let it land. Then: 'But here's the thing...'">
+  <div class="slide-inner center">
+    <div class="big-stat">400,000+ lines of code</div>
+    <p style="font-size: 1.7rem; margin-bottom: 28px;">5 products. ~3 months. <span class="bold">Solo.</span></p>
+    <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px;">
+      <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 16px;">
+        <img src="icon-peekaboo.png" alt="" style="width: 24px; height: 24px; border-radius: 6px;">
+        <span style="font-size: 0.95rem;">Peekaboo</span>
+        <span class="small" style="font-size: 0.8rem;">~250K</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 16px;">
+        <img src="icon-subredditsignals.png" alt="" style="width: 24px; height: 24px; border-radius: 6px;">
+        <span style="font-size: 0.95rem;">SubredditSignals</span>
+        <span class="small" style="font-size: 0.8rem;">~90K</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 16px;">
+        <img src="icon-mochi.png" alt="" style="width: 24px; height: 24px; border-radius: 6px;">
+        <span style="font-size: 0.95rem;">Mochi</span>
+        <span class="small" style="font-size: 0.8rem;">~60K</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 16px;">
+        <img src="icon-tickettopr.png" alt="" style="width: 24px; height: 24px; border-radius: 6px;">
+        <span style="font-size: 0.95rem;">TicketToPR</span>
+        <span class="small" style="font-size: 0.8rem;">~15K</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 16px;">
+        <img src="icon-locala.webp" alt="" class="invert" style="width: 24px; height: 24px; border-radius: 6px; filter: brightness(0) invert(1);">
+        <span style="font-size: 0.95rem;">Locala</span>
+        <span class="small" style="font-size: 0.8rem;">~10K</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:12px; justify-content:center; margin-bottom:20px;">
+      <img src="github-contributions-2025.png" alt="2,237 contributions in 2025" style="height:100px; border-radius:8px; border:1px solid var(--border);">
+      <img src="github-contributions-2026.png" alt="478 contributions in 2026" style="height:100px; border-radius:8px; border:1px solid var(--border);">
+    </div>
+    <div class="grid-3">
+      <div class="card" style="text-align: center;">
+        <div class="big-stat" style="font-size: 3.2rem;">1,162</div>
+        <p class="small">commits (Peekaboo alone)</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div class="big-stat" style="font-size: 3.2rem;">13</div>
+        <p class="small">specialist AI agents</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div class="big-stat" style="font-size: 3.2rem;">1</div>
+        <p class="small">person</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 4: But I'm Not Vibe Coding -->
+<section class="slide slide-data" data-title="Not Vibe Coding" data-notes="This is the credibility slide. Show the data, then deliver the punchline.">
+  <div class="slide-inner">
+    <h2>But I'm <span class="red">not</span> vibe coding.</h2>
+    <div class="grid-3" style="margin-top: 24px;">
+      <div class="card" style="text-align: center; border-color: rgba(248,113,113,0.2);">
+        <div style="font-size: 3.2rem; font-weight: 900; color: var(--red); letter-spacing: -0.03em;">1.7x</div>
+        <p class="small">more issues in unreviewed<br>AI-generated code</p>
+        <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 8px;">The New Stack, 2026</p>
+      </div>
+      <div class="card" style="text-align: center; border-color: rgba(248,113,113,0.2);">
+        <div style="font-size: 3.2rem; font-weight: 900; color: var(--red); letter-spacing: -0.03em;">2.74x</div>
+        <p class="small">more security<br>vulnerabilities</p>
+        <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 8px;">The New Stack, 2026</p>
+      </div>
+      <div class="card" style="text-align: center; border-color: rgba(248,113,113,0.2);">
+        <div style="font-size: 3.2rem; font-weight: 900; color: var(--red); letter-spacing: -0.03em;">45%</div>
+        <p class="small">of AI code introduces<br>OWASP Top 10 vulns</p>
+        <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 8px;">Veracode, 2025</p>
+      </div>
+    </div>
+    <p style="font-size: 1.6rem; margin-top: 32px; text-align: center;">I review <span class="green bold">almost everything.</span></p>
+  </div>
+</section>
+
+<!-- Slide 5: Audience Poll -->
+<section class="slide" data-title="Audience Poll" data-notes="Get hands raised. Calibrate language based on audience mix.">
+  <div class="slide-inner center">
+    <h2>Quick show of hands</h2>
+    <div style="margin-top: 40px; display: flex; flex-direction: column; gap: 20px; align-items: center;">
+      <div class="card" style="display: inline-flex; align-items: center; gap: 16px; padding: 20px 36px; min-width: 480px;">
+        <span style="font-size: 2rem;">🖥</span>
+        <span style="font-size: 1.5rem;">Who here <span class="accent bold">writes code</span>?</span>
+      </div>
+      <div class="card" style="display: inline-flex; align-items: center; gap: 16px; padding: 20px 36px; min-width: 480px;">
+        <span style="font-size: 2rem;">👥</span>
+        <span style="font-size: 1.5rem;">Who <span class="accent bold">manages developers</span>?</span>
+      </div>
+      <div class="card" style="display: inline-flex; align-items: center; gap: 16px; padding: 20px 36px; min-width: 480px;">
+        <span style="font-size: 2rem;">✨</span>
+        <span style="font-size: 1.5rem;">Who has <span class="accent bold">never opened a terminal</span>?</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 5b: Who Uses What? -->
+<section class="slide" data-title="Who Uses What?" data-notes="Second poll while audience is engaged. Gauges the room before stating your preference.">
+  <div class="slide-inner center">
+    <h3>One More</h3>
+    <h2>Who uses what?</h2>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:28px; max-width:900px; margin-left:auto; margin-right:auto;">
+      <!-- Claude Code -->
+      <div class="card card-glow" style="text-align:center; padding:22px 16px;">
+        <svg width="36" height="36" viewBox="0 0 16 16" fill="var(--accent)" style="margin-bottom:10px;"><path d="m3.127 10.604 3.135-1.76.053-.153-.053-.085H6.11l-.525-.032-1.791-.048-1.554-.065-1.505-.08-.38-.081L0 7.832l.036-.234.32-.214.455.04 1.009.069 1.513.105 1.097.064 1.626.17h.259l.036-.105-.089-.065-.068-.064-1.566-1.062-1.695-1.121-.887-.646-.48-.327-.243-.306-.104-.67.435-.48.585.04.15.04.593.456 1.267.981 1.654 1.218.242.202.097-.068.012-.049-.109-.181-.9-1.626-.96-1.655-.428-.686-.113-.411a2 2 0 0 1-.068-.484l.496-.674L4.446 0l.662.089.279.242.411.94.666 1.48 1.033 2.014.302.597.162.553.06.17h.105v-.097l.085-1.134.157-1.392.154-1.792.052-.504.25-.605.497-.327.387.186.319.456-.045.294-.19 1.23-.37 1.93-.243 1.29h.142l.161-.16.654-.868 1.097-1.372.484-.545.565-.601.363-.287h.686l.505.751-.226.775-.707.895-.585.759-.839 1.13-.524.904.048.072.125-.012 1.897-.403 1.024-.186 1.223-.21.553.258.06.263-.218.536-1.307.323-1.533.307-2.284.54-.028.02.032.04 1.029.098.44.024h1.077l2.005.15.525.346.315.424-.053.323-.807.411-3.631-.863-.872-.218h-.12v.073l.726.71 1.331 1.202 1.667 1.55.084.383-.214.302-.226-.032-1.464-1.101-.565-.497-1.28-1.077h-.084v.113l.295.432 1.557 2.34.08.718-.112.234-.404.141-.444-.08-.911-1.28-.94-1.44-.759-1.291-.093.053-.448 4.821-.21.246-.484.186-.403-.307-.214-.496.214-.98.258-1.28.21-1.016.19-1.263.112-.42-.008-.028-.092.012-.953 1.307-1.448 1.957-1.146 1.227-.274.109-.477-.247.045-.44.266-.39 1.586-2.018.956-1.25.617-.723-.004-.105h-.036l-4.212 2.736-.75.096-.324-.302.04-.496.154-.162 1.267-.871z"/></svg>
+        <p class="bold" style="font-size:1.15rem;">Claude Code</p>
+        <p class="small" style="color:var(--text-muted);">CLAUDE.md</p>
+      </div>
+      <!-- Cursor -->
+      <div class="card" style="text-align:center; padding:22px 16px;">
+        <svg width="36" height="36" viewBox="0 0 16 16" fill="var(--text-muted)" style="margin-bottom:10px;"><path d="M14.082 2.182a.5.5 0 0 1 .103.557L8.528 15.467a.5.5 0 0 1-.917-.007L5.57 10.694.803 8.652a.5.5 0 0 1-.006-.916l12.728-5.657a.5.5 0 0 1 .556.103zM2.25 8.184l3.897 1.67a.5.5 0 0 1 .262.263l1.67 3.897L12.743 3.52z"/></svg>
+        <p class="bold" style="font-size:1.15rem;">Cursor</p>
+        <p class="small" style="color:var(--text-muted);">.cursorrules</p>
+      </div>
+      <!-- OpenAI Codex -->
+      <div class="card" style="text-align:center; padding:22px 16px;">
+        <svg width="36" height="36" viewBox="0 0 16 16" fill="var(--text-muted)" style="margin-bottom:10px;"><path d="M14.949 6.547a3.94 3.94 0 0 0-.348-3.273 4.11 4.11 0 0 0-4.4-1.934 4.1 4.1 0 0 0-1.778-.614 4.15 4.15 0 0 0-2.118.114 4.1 4.1 0 0 0-1.891.948 4.04 4.04 0 0 0-1.158 1.753 4.1 4.1 0 0 0-1.563.679 4 4 0 0 0-1.14 1.252 3.99 3.99 0 0 0 .502 4.731 3.94 3.94 0 0 0 .346 3.274 4.11 4.11 0 0 0 4.402 1.933c.382.425.852.764 1.377.995.526.231 1.095.35 1.67.346 1.78.002 3.358-1.132 3.901-2.804a4.1 4.1 0 0 0 1.563-.68 4 4 0 0 0 1.14-1.253 3.99 3.99 0 0 0-.506-4.716m-6.097 8.406a3.05 3.05 0 0 1-1.945-.694l.096-.054 3.23-1.838a.53.53 0 0 0 .265-.455v-4.49l1.366.778q.02.011.025.035v3.722c-.003 1.653-1.361 2.992-3.037 2.996m-6.53-2.75a2.95 2.95 0 0 1-.36-2.01l.095.057L5.29 12.09a.53.53 0 0 0 .527 0l3.949-2.246v1.555a.05.05 0 0 1-.022.041L6.473 13.3c-1.454.826-3.311.335-4.15-1.098m-.85-6.94A3.02 3.02 0 0 1 3.07 3.949v3.785a.51.51 0 0 0 .262.451l3.93 2.237-1.366.779a.05.05 0 0 1-.048 0L2.585 9.342a2.98 2.98 0 0 1-1.113-4.094zm11.216 2.571L8.747 5.576l1.362-.776a.05.05 0 0 1 .048 0l3.265 1.86a3 3 0 0 1 1.173 1.207 2.96 2.96 0 0 1-.27 3.2 3.05 3.05 0 0 1-1.36.997V8.279a.52.52 0 0 0-.276-.445m1.36-2.015-.097-.057-3.226-1.855a.53.53 0 0 0-.53 0L6.249 6.153V4.598a.04.04 0 0 1 .019-.04L9.533 2.7a3.07 3.07 0 0 1 3.257.139c.474.325.843.778 1.066 1.303.223.526.289 1.103.191 1.664zM5.503 8.575 4.139 7.8a.05.05 0 0 1-.026-.037V4.049c0-.57.166-1.127.476-1.607s.752-.864 1.275-1.105a3.08 3.08 0 0 1 3.234.41l-.096.054-3.23 1.838a.53.53 0 0 0-.265.455zm.742-1.577 1.758-1 1.762 1v2l-1.755 1-1.762-1z"/></svg>
+        <p class="bold" style="font-size:1.15rem;">OpenAI Codex</p>
+        <p class="small" style="color:var(--text-muted);">AGENTS.md</p>
+      </div>
+    </div>
+    <p style="margin-top:22px; font-size:1.15rem; color:var(--text-muted);">Something else? No AI tools yet? <span class="bold" style="color:var(--text);">All valid.</span></p>
+  </div>
+</section>
+
+<!-- Slide 5c: Why Claude Code -->
+<section class="slide" data-title="Why Claude Code" data-notes="State your preference right after the poll. Then the rest of the talk shows HOW you use it.">
+  <div class="slide-inner">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+      <svg width="28" height="28" viewBox="0 0 16 16" fill="var(--accent)" style="flex-shrink:0;"><path fill-rule="evenodd" d="M9.218 2h2.402L16 12.987h-2.402zM4.379 2h2.512l4.38 10.987H8.82l-.895-2.308h-4.58l-.896 2.307H0L4.38 2.001zm2.755 6.64L5.635 4.777 4.137 8.64z"/></svg>
+      <h3 style="margin:0;">My Tool of Choice</h3>
+    </div>
+    <h2>Claude Code CLI</h2>
+    <div class="grid-2" style="margin-top: 20px; gap: 28px; align-items:center;">
+      <div>
+        <p style="font-size: 1.1rem; line-height:1.6; margin-bottom:16px;">These principles work across <span class="bold">all</span> of these tools. The handbook pattern, the guardrails, the review process &mdash; they're universal.</p>
+        <p style="font-size: 1.1rem; line-height:1.6; margin-bottom:16px;">But my preference is <span class="accent bold">Claude Code</span> and the <span class="accent bold">Claude CLI</span>.</p>
+        <div style="margin-top:16px;">
+          <div style="display:flex; align-items:flex-start; gap:10px; margin-bottom:10px;">
+            <span class="accent bold" style="font-size:1.1rem;">1.</span>
+            <span style="font-size:0.95rem;"><span class="bold">Terminal-native</span> &mdash; fits how I already work</span>
+          </div>
+          <div style="display:flex; align-items:flex-start; gap:10px; margin-bottom:10px;">
+            <span class="accent bold" style="font-size:1.1rem;">2.</span>
+            <span style="font-size:0.95rem;"><span class="bold">CLAUDE.md</span> &mdash; richest config system (38KB in my projects)</span>
+          </div>
+          <div style="display:flex; align-items:flex-start; gap:10px; margin-bottom:10px;">
+            <span class="accent bold" style="font-size:1.1rem;">3.</span>
+            <span style="font-size:0.95rem;"><span class="bold">Hooks</span> &mdash; enforce rules at the system level, not just suggestions</span>
+          </div>
+          <div style="display:flex; align-items:flex-start; gap:10px;">
+            <span class="accent bold" style="font-size:1.1rem;">4.</span>
+            <span style="font-size:0.95rem;"><span class="bold">80.9% on SWE-bench</span> &mdash; highest agentic coding benchmark</span>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <img src="claude-code-cli.png" alt="Claude Code CLI running in terminal" style="width:100%; border-radius:10px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+        <p class="small" style="margin-top:8px; color:var(--text-muted);">Claude Code &mdash; Opus 4.6 in the terminal</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== THE AI TEAM ==================== -->
+
+<!-- Slide 6: Think AI Employee -->
+<section class="slide" data-title="AI Employee, Not Tool" data-notes="This reframe is the core thesis. Show the org chart, then on the next slide show HOW they communicate.">
+  <div class="slide-inner center">
+    <h3>The AI Team</h3>
+    <h2>Think <span class="highlight">"AI Employee,"</span> not "AI Tool"</h2>
+    <div class="org-chart">
+      <div class="org-top">Me &mdash; CEO / Product / Architect</div>
+      <div class="org-line"></div>
+      <div class="org-row">
+        <div class="org-node">Product Director</div>
+        <div class="org-node">Execute Agent</div>
+        <div class="org-node">Code Reviewer</div>
+        <div class="org-node">QA Auditor</div>
+      </div>
+      <div class="org-row">
+        <div class="org-node">Pipeline Medic</div>
+        <div class="org-node">UX Director</div>
+        <div class="org-node">Lead Backend</div>
+        <div class="org-node">Lead Frontend</div>
+      </div>
+      <div class="org-row">
+        <div class="org-node">Lead Architect</div>
+        <div class="org-node">Data Analyst</div>
+        <div class="org-node">SEO Specialist</div>
+        <div class="org-node">Source Auditor</div>
+        <div class="org-node">UX Researcher</div>
+      </div>
+    </div>
+    <p class="small" style="margin-top: 14px;">13 specialist agents &mdash; Peekaboo</p>
+  </div>
+</section>
+
+<!-- Slide 6b: How Agents Talk to Each Other -->
+<section class="slide" data-title="How Agents Communicate" data-notes="Walk through the chain left to right. 'I give the CLI a feature request. Product Director writes the spec. Frontend and Backend implement in parallel. Architect reviews. QA auditors validate. This is my actual .claude/agents/ directory — 13 markdown files.'">
+  <div class="slide-inner center">
+    <h3>The AI Team</h3>
+    <h2>How agents <span class="highlight">talk to each other</span></h2>
+    <p style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 20px;">I give the CLI a feature request. This is what happens &mdash; from my actual <span class="accent">/.claude/agents/</span> directory:</p>
+
+    <!-- Phase 1: Spec -->
+    <div style="display: flex; align-items: flex-start; gap: 14px; justify-content: center; flex-wrap: wrap;">
+      <!-- Product Director -->
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+        <div style="background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; padding: 12px 20px; border-radius: 12px; font-size: 0.95rem; font-weight: 700; text-align: center; min-width: 140px; box-shadow: 0 4px 20px var(--accent-glow-strong);">
+          Product Director
+          <div style="font-size: 0.7rem; font-weight: 400; opacity: 0.8; margin-top: 2px;">Sonnet &middot; creates spec</div>
+        </div>
+        <div class="code" style="font-size: 0.72rem; padding: 8px 12px; margin: 0; text-align: left; max-width: 160px;">PRD-lite
+DB / API / Lib / UI
+Acceptance criteria
+Rollout plan</div>
+      </div>
+
+      <div class="flow-arrow" style="margin-top: 18px;">→</div>
+
+      <!-- Parallel Implementation -->
+      <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
+        <div style="display: flex; gap: 8px;">
+          <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 10px 16px; border-radius: 10px; font-size: 0.9rem; text-align: center;">
+            <span class="bold">Lead Frontend</span>
+            <div class="small" style="font-size: 0.7rem;">Sonnet &middot; UI layer</div>
+          </div>
+          <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 10px 16px; border-radius: 10px; font-size: 0.9rem; text-align: center;">
+            <span class="bold">Lead Backend</span>
+            <div class="small" style="font-size: 0.7rem;">Sonnet &middot; API + DB</div>
+          </div>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--green); font-weight: 600;">parallel</div>
+      </div>
+
+      <div class="flow-arrow" style="margin-top: 18px;">→</div>
+
+      <!-- Architect Review -->
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+        <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 10px 16px; border-radius: 10px; font-size: 0.9rem; text-align: center; min-width: 120px;">
+          <span class="bold">Lead Architect</span>
+          <div class="small" style="font-size: 0.7rem;">Opus &middot; KISS review</div>
+        </div>
+      </div>
+
+      <div class="flow-arrow" style="margin-top: 18px;">→</div>
+
+      <!-- QA Auditors -->
+      <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 240px;">
+          <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 0.8rem;">Scoring Auditor</div>
+          <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 0.8rem;">Pipeline Medic</div>
+          <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 0.8rem;">Source Auditor</div>
+          <div style="background: var(--bg-card); border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 0.8rem;">Brand Scorer</div>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--yellow); font-weight: 600;">domain-specific QA</div>
+      </div>
+
+      <div class="flow-arrow" style="margin-top: 18px;">→</div>
+
+      <!-- Human -->
+      <div style="background: var(--green-dim); border: 1px solid rgba(52,211,153,0.3); padding: 12px 20px; border-radius: 12px; font-size: 0.95rem; font-weight: 700; text-align: center; min-width: 80px; margin-top: 2px; color: var(--green);">
+        You
+        <div style="font-size: 0.7rem; font-weight: 400; opacity: 0.8; margin-top: 2px;">final gate</div>
+      </div>
+    </div>
+
+    <!-- Key insight -->
+    <div style="margin-top: 24px; display: flex; gap: 20px; justify-content: center;">
+      <div class="card" style="padding: 14px 20px; max-width: 320px;">
+        <p style="font-size: 0.9rem;"><span class="accent bold">Shared brain:</span> Every agent reads CLAUDE.md (38KB) on every run. They don't call each other &mdash; they read the same constitution.</p>
+      </div>
+      <div class="card" style="padding: 14px 20px; max-width: 320px;">
+        <p style="font-size: 0.9rem;"><span class="accent bold">Token cost:</span> Opus for complex decisions. Sonnet for implementation. A full spec-to-QA cycle runs <span class="green bold">$2&ndash;8</span> depending on scope.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 7: The Employee Handbook -->
+<section class="slide" data-title="CLAUDE.md = Handbook" data-notes="Make the analogy concrete. Every serious AI coding tool has converged on this pattern.">
+  <div class="slide-inner">
+    <h3>The Employee Handbook</h3>
+    <h2>Every AI Tool Has One Now</h2>
+    <div class="grid-2" style="margin-top: 20px; gap: 28px;">
+      <div>
+        <table style="font-size: 0.95rem;">
+          <tr><th>AI Tool</th><th>Config File</th></tr>
+          <tr><td><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-2px; margin-right:6px;"><path d="m3.127 10.604 3.135-1.76.053-.153-.053-.085H6.11l-.525-.032-1.791-.048-1.554-.065-1.505-.08-.38-.081L0 7.832l.036-.234.32-.214.455.04 1.009.069 1.513.105 1.097.064 1.626.17h.259l.036-.105-.089-.065-.068-.064-1.566-1.062-1.695-1.121-.887-.646-.48-.327-.243-.306-.104-.67.435-.48.585.04.15.04.593.456 1.267.981 1.654 1.218.242.202.097-.068.012-.049-.109-.181-.9-1.626-.96-1.655-.428-.686-.113-.411a2 2 0 0 1-.068-.484l.496-.674L4.446 0l.662.089.279.242.411.94.666 1.48 1.033 2.014.302.597.162.553.06.17h.105v-.097l.085-1.134.157-1.392.154-1.792.052-.504.25-.605.497-.327.387.186.319.456-.045.294-.19 1.23-.37 1.93-.243 1.29h.142l.161-.16.654-.868 1.097-1.372.484-.545.565-.601.363-.287h.686l.505.751-.226.775-.707.895-.585.759-.839 1.13-.524.904.048.072.125-.012 1.897-.403 1.024-.186 1.223-.21.553.258.06.263-.218.536-1.307.323-1.533.307-2.284.54-.028.02.032.04 1.029.098.44.024h1.077l2.005.15.525.346.315.424-.053.323-.807.411-3.631-.863-.872-.218h-.12v.073l.726.71 1.331 1.202 1.667 1.55.084.383-.214.302-.226-.032-1.464-1.101-.565-.497-1.28-1.077h-.084v.113l.295.432 1.557 2.34.08.718-.112.234-.404.141-.444-.08-.911-1.28-.94-1.44-.759-1.291-.093.053-.448 4.821-.21.246-.484.186-.403-.307-.214-.496.214-.98.258-1.28.21-1.016.19-1.263.112-.42-.008-.028-.092.012-.953 1.307-1.448 1.957-1.146 1.227-.274.109-.477-.247.045-.44.266-.39 1.586-2.018.956-1.25.617-.723-.004-.105h-.036l-4.212 2.736-.75.096-.324-.302.04-.496.154-.162 1.267-.871z"/></svg>Claude Code</td><td class="accent bold">CLAUDE.md</td></tr>
+          <tr><td>OpenAI Codex</td><td>AGENTS.md</td></tr>
+          <tr><td>Cursor</td><td>.cursorrules</td></tr>
+          <tr><td>Windsurf</td><td>.windsurfrules</td></tr>
+          <tr><td>GitHub Copilot</td><td>.github/copilot-instructions.md</td></tr>
+          <tr><td>Google Gemini CLI</td><td>GEMINI.md</td></tr>
+        </table>
+      </div>
+      <div>
+        <table style="font-size: 0.95rem;">
+          <tr><th>Your Company Handbook</th><th>AI Handbook</th></tr>
+          <tr><td>"Never share customer data"</td><td>"Never expose emails in API responses"</td></tr>
+          <tr><td>"All purchases need approval"</td><td>"Never install packages without asking"</td></tr>
+          <tr><td>"Follow the brand guidelines"</td><td>"Use the design system colors"</td></tr>
+          <tr><td>"Report incidents immediately"</td><td>"Log all errors with context"</td></tr>
+        </table>
+      </div>
+    </div>
+    <blockquote style="margin-top: 18px;">Every serious AI coding tool has converged on this pattern.<br>Human employees forget the handbook. AI employees read it <span class="bold" style="color: var(--text);">every single time.</span></blockquote>
+  </div>
+</section>
+
+<!-- ==================== HOW FEATURES GET BUILT ==================== -->
+
+<!-- Slide 9: Two Paths -->
+<section class="slide" data-title="Two Development Paths" data-notes="This is the key insight: not everything goes through the same pipeline. Match the tool to the task. Low-hanging fruit = automated. Complex = hands-on with Claude CLI.">
+  <div class="slide-inner center">
+    <h3>How Features Get Built</h3>
+    <h2>Two paths, one engineer</h2>
+    <div class="grid-2" style="margin-top: 28px;">
+      <div class="card card-glow" style="text-align: center; padding: 28px;">
+        <div style="font-size: 2.2rem; margin-bottom: 12px;">🤖</div>
+        <p style="font-size: 1.3rem; font-weight: 700; color: var(--accent); margin-bottom: 10px;">Path 1: Fully Automated</p>
+        <p style="font-size: 1.05rem;">Low-hanging fruit, simple customer requests,<br>co-founder asks</p>
+        <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+          <span class="tag tag-accent">TicketToPR</span>
+          <span class="tag tag-green">Notion board</span>
+        </div>
+        <p class="small" style="margin-top: 14px;">I write a ticket. AI builds it. I review the PR.</p>
+      </div>
+      <div class="card" style="text-align: center; padding: 28px;">
+        <div style="font-size: 2.2rem; margin-bottom: 12px;">🧑‍💻</div>
+        <p style="font-size: 1.3rem; font-weight: 700; color: var(--accent2); margin-bottom: 10px;">Path 2: Hands-On + AI</p>
+        <p style="font-size: 1.05rem;">DB migrations, cron jobs, complex user flows,<br>large architecture tickets</p>
+        <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+          <span class="tag tag-accent">Claude Code CLI</span>
+          <span class="tag tag-yellow">VS Code</span>
+        </div>
+        <p class="small" style="margin-top: 14px;">I drive. Claude writes tests, functions, edge cases.</p>
+      </div>
+    </div>
+    <p style="margin-top: 24px; font-size: 1.2rem; color: var(--text-muted);">
+      Match the <span class="bold" style="color: var(--text);">tool to the task.</span> Not everything needs the same pipeline.
+    </p>
+  </div>
+</section>
+
+<!-- Slide 10: Path 1 — TicketToPR Board -->
+<section class="slide" data-title="Path 1: TicketToPR" data-notes="Show the Notion board. Walk through the columns left to right. 'My co-founder writes tickets here. I write tickets here. The system handles the rest.' Emphasize: plain English, no code required from the person writing the ticket.">
+  <div class="slide-inner center">
+    <h3>Path 1 &mdash; Fully Automated</h3>
+    <h2>The <span class="highlight">TicketToPR</span> Notion board</h2>
+    <div style="margin-top: 16px;">
+      <img src="tickettopr-board.png" alt="TicketToPR Notion Board" class="screenshot" style="max-height: 46vh; margin: 0 auto; display: block;">
+    </div>
+    <div class="flow" style="justify-content: center; margin-top: 18px;">
+      <div class="flow-step" style="font-size: 0.9rem;">📝 Backlog</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="font-size: 0.9rem;">🔍 Review</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="font-size: 0.9rem;">📊 Scored</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step active-step" style="font-size: 0.9rem;">⚡ Execute</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="font-size: 0.9rem; border-color: var(--green); background: var(--green-dim);">✅ PR Ready</div>
+    </div>
+    <p class="small" style="margin-top: 12px;">Plain English tickets in Notion. AI handles everything in between.</p>
+  </div>
+</section>
+
+<!-- Slide 10b: Path 1 — Behind the Scenes -->
+<section class="slide" data-title="Path 1: Behind the Scenes" data-notes="Walk through what happens when a ticket moves to Execute. 'This runs on my local machine. Behind the scenes in a terminal, the system pulls the ticket, scores it, comes up with a plan. If it believes it can one-shot this — it does. Creates a PR for me to review.' Emphasize the confidence score and one-shot concept.">
+  <div class="slide-inner">
+    <h3>Path 1 &mdash; Behind the Scenes</h3>
+    <h2>What happens when you drag to <span class="highlight">Execute</span></h2>
+    <div class="grid-2" style="margin-top: 16px;">
+      <div>
+        <div class="layers">
+          <div class="layer">
+            <div class="layer-num">1</div>
+            <div><span class="bold">Pull</span><br><span class="small">System pulls the ticket from Notion, reads the full context</span></div>
+          </div>
+          <div class="layer">
+            <div class="layer-num">2</div>
+            <div><span class="bold">Score</span><br><span class="small">AI reads the codebase, scores ease (1-10) and confidence (1-10)</span></div>
+          </div>
+          <div class="layer">
+            <div class="layer-num">3</div>
+            <div><span class="bold">Plan</span><br><span class="small">Creates implementation plan: files affected, approach, estimated cost</span></div>
+          </div>
+          <div class="layer">
+            <div class="layer-num">4</div>
+            <div><span class="bold">Build</span><br><span class="small">If confidence is high enough to <span class="accent bold">one-shot</span> &mdash; it builds, tests, and creates a PR</span></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p class="small" style="margin-bottom: 8px;">Behind the scenes (my terminal):</p>
+        <div class="code" style="font-size: 0.85rem;"><span class="cmt">$ ticket-to-pr execute --ticket abc123</span>
+
+<span class="kw">Pulling ticket:</span> "Add sort-by-visibility"
+<span class="kw">Scanning codebase...</span> 243K lines
+
+<span class="kw">Ease:</span>       <span class="str">8/10</span>
+<span class="kw">Confidence:</span> <span class="str">9/10</span> <span class="str">← can one-shot</span>
+<span class="kw">Files:</span>      3 affected
+<span class="kw">Cost est:</span>   <span class="str">$0.42</span>
+
+<span class="kw">Creating worktree...</span>
+<span class="kw">Implementing...</span> ████████░░ 80%
+<span class="kw">Running tests...</span> <span class="str">✓ 14 passed</span>
+<span class="kw">Creating PR...</span>  <span class="str">✓ #47 ready</span></div>
+        <div style="margin-top: 14px; padding: 14px; background: var(--accent-glow); border: 1px solid rgba(99,102,241,0.2); border-radius: 10px; text-align: center;">
+          <p style="font-size: 0.95rem; color: var(--text-muted);">My total time</p>
+          <p class="big-stat" style="font-size: 2.2rem;">~7 minutes</p>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">Write the ticket + review the PR. That's it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide: Path 2 — Claude CLI -->
+<section class="slide" data-title="Path 2: Claude CLI" data-notes="This is for the complex stuff. 'I open Claude Code in my VS Code terminal. I'm driving — Claude is my copilot. I tell it what to build, it writes the code, I test it, we iterate.' Show the types of work and how the collaboration looks.">
+  <div class="slide-inner">
+    <h3>Path 2 &mdash; Hands-On + AI</h3>
+    <h2>Complex work with <span class="highlight">Claude Code CLI</span></h2>
+    <div class="grid-2" style="margin-top: 16px;">
+      <div>
+        <p style="font-size: 1.15rem; font-weight: 600; margin-bottom: 14px;">What needs hands-on:</p>
+        <ul>
+          <li><span class="bold">Database migrations</span> &mdash; schema changes, data backfills</li>
+          <li><span class="bold">Cron jobs &amp; pipelines</span> &mdash; scheduling, error recovery</li>
+          <li><span class="bold">Large tickets</span> &mdash; new features spanning 10+ files</li>
+          <li><span class="bold">Complex user flows</span> &mdash; auth, billing, multi-step forms</li>
+          <li><span class="bold">Third-party integrations</span> &mdash; APIs, webhooks, OAuth</li>
+        </ul>
+      </div>
+      <div>
+        <p style="font-size: 1.15rem; font-weight: 600; margin-bottom: 14px;">How I work with Claude:</p>
+        <div class="code" style="font-size: 0.82rem;"><span class="cmt"># VS Code terminal — I'm driving</span>
+
+<span class="kw">me:</span> <span class="str">"Write a migration that adds a
+     visibility_history table with daily
+     snapshots per brand per platform."</span>
+
+<span class="kw">claude:</span> Creates migration + types + tests
+
+<span class="kw">me:</span> <span class="str">"Now write edge case tests — what if
+     a platform returns null? What about
+     duplicate snapshots on the same day?"</span>
+
+<span class="kw">claude:</span> Writes 12 test cases, 3 catch bugs
+
+<span class="kw">me:</span> Reviews, tests locally, deploys</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 11b: Path 2 — What Claude Helps With -->
+<section class="slide" data-title="Path 2: Claude as Copilot" data-notes="Claude isn't writing the whole feature autonomously here — it's a force multiplier. I handle architecture and testing strategy. Claude handles the boilerplate, the edge cases, and the tedious parts.">
+  <div class="slide-inner">
+    <h3>Path 2 &mdash; Claude as Copilot</h3>
+    <h2>What Claude handles vs. what <span class="highlight">I handle</span></h2>
+    <div class="grid-2" style="margin-top: 18px;">
+      <div class="card" style="border-color: rgba(99,102,241,0.3);">
+        <p style="font-size: 1.1rem; font-weight: 700; color: var(--accent); margin-bottom: 14px;">Claude writes:</p>
+        <ul>
+          <li>Test suites &mdash; unit, integration, edge cases</li>
+          <li>Utility functions &amp; helpers</li>
+          <li>Type definitions &amp; interfaces</li>
+          <li>Boilerplate &mdash; API routes, form validation</li>
+          <li>Refactors &mdash; "extract this into a hook"</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color: rgba(52,211,153,0.3);">
+        <p style="font-size: 1.1rem; font-weight: 700; color: var(--green); margin-bottom: 14px;">I decide:</p>
+        <ul>
+          <li>Architecture &mdash; what goes where, why</li>
+          <li>Data model &mdash; schema design, relationships</li>
+          <li>Testing strategy &mdash; what to test, what matters</li>
+          <li>User flows &mdash; how it should feel, edge cases</li>
+          <li>Ship/no-ship &mdash; final call is always mine</li>
+        </ul>
+      </div>
+    </div>
+    <blockquote style="margin-top: 18px;">
+      I'm not asking Claude to <em>build the feature.</em> I'm asking Claude to help me <span class="bold" style="color: var(--text);">build it faster.</span>
+    </blockquote>
+  </div>
+</section>
+
+<!-- Slide 13: Cost Comparison -->
+<section class="slide slide-positive" data-title="Cost Comparison" data-notes="This is the slide that makes founders lean forward. Let them read it.">
+  <div class="slide-inner">
+    <h3>How Features Get Built</h3>
+    <h2>Cost comparison</h2>
+    <table style="margin-top: 20px;">
+      <tr><th></th><th style="color: var(--green);">AI Agent Team</th><th>Junior Developer</th><th>Agency</th></tr>
+      <tr><td class="bold">Monthly cost</td><td class="green bold">$100–300</td><td>$5,000–8,000</td><td>$10,000–25,000</td></tr>
+      <tr><td class="bold">Available</td><td class="green bold">24/7</td><td>Business hours</td><td>Business hours</td></tr>
+      <tr><td class="bold">Ramp-up time</td><td class="green bold">Instant</td><td>2–4 weeks</td><td>1–2 weeks</td></tr>
+      <tr><td class="bold">Follows rules</td><td class="green bold">Every time</td><td>Sometimes</td><td>Varies</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ==================== CORE PRINCIPLES ==================== -->
+
+<!-- Slide 14: KISS in Dev -->
+<section class="slide" data-title="KISS in Dev" data-notes="KISS isn't about less code — it's about less ambiguity. Walk through the dev example first, then show the agent parallel.">
+  <div class="slide-inner">
+    <h3>Core Principles</h3>
+    <h2>KISS &mdash; One Function, One Job. You Already Do This.</h2>
+    <p style="font-size: 1.15rem; margin-bottom: 14px; color: var(--text-muted);">As a developer, you already apply KISS every day:</p>
+    <div class="grid-2" style="margin-top: 8px;">
+      <div>
+        <p style="margin-bottom: 8px;"><span class="red bold">Over-engineered:</span></p>
+        <div class="code" style="font-size: 0.85rem;"><span class="kw">class</span> <span class="fn">UserServiceFactoryProvider</span> {
+  <span class="kw">create</span>(type, config, opts, flags) {
+    <span class="cmt">// 200 lines handling every</span>
+    <span class="cmt">// possible edge case upfront</span>
+  }
+}</div>
+      </div>
+      <div>
+        <p style="margin-bottom: 8px;"><span class="green bold">KISS:</span></p>
+        <div class="code" style="font-size: 0.85rem;"><span class="kw">function</span> <span class="fn">getUser</span>(id) {
+  <span class="kw">return</span> db.users.findById(id);
+}
+
+<span class="cmt">// Add complexity only when</span>
+<span class="cmt">// you actually need it</span></div>
+      </div>
+    </div>
+    <blockquote style="margin-top: 16px;">One function, one job. One module, one concern. The same rule scales to agents.</blockquote>
+  </div>
+</section>
+
+<!-- Slide 15: KISS for Agents -->
+<section class="slide" data-title="KISS for Agents" data-notes="The parallel: same principle, new medium. One agent, one job. Show the bad prompt vs good agent spec.">
+  <div class="slide-inner">
+    <h3>Core Principles</h3>
+    <h2>KISS for Agents &mdash; One Prompt, One Responsibility</h2>
+    <p style="font-size: 1.15rem; margin-bottom: 14px; color: var(--text-muted);">The exact same principle applied to your AI team:</p>
+    <div class="grid-2" style="margin-top: 8px;">
+      <div>
+        <p style="margin-bottom: 8px;"><span class="red bold">Vague mega-prompt:</span></p>
+        <div class="code" style="font-size: 0.85rem;"><span class="str">"Review the code, fix any bugs,
+update the tests, refactor if
+needed, and make sure everything
+is good."</span>
+
+<span class="cmt">// 5 jobs = 0 accountability</span></div>
+      </div>
+      <div>
+        <p style="margin-bottom: 8px;"><span class="green bold">Focused agent spec:</span></p>
+        <div class="code" style="font-size: 0.85rem;"><span class="kw">Role:</span> Scoring Auditor
+<span class="kw">Job:</span>  Verify visibility formula
+<span class="kw">Protocol:</span>
+  1. Locate canonical formula
+  2. Search all usages
+  3. Validate each matches
+  4. Run unit tests
+  5. Report: pass / fail</div>
+      </div>
+    </div>
+    <blockquote style="margin-top: 16px;">Simple doesn't mean short. Simple means <span class="bold" style="color: var(--text);">unambiguous.</span></blockquote>
+  </div>
+</section>
+
+<!-- Slide: SOLID Applied to Agents -->
+<section class="slide" data-title="SOLID for Agents" data-notes="Concrete examples. For each principle, show the bad pattern (what people actually do) vs. the good pattern. These are real mistakes from real projects.">
+  <div class="slide-inner">
+    <h3>Core Principles</h3>
+    <h2>SOLID for Agents &mdash; Same Rules, New Team Members</h2>
+    <div class="layers" style="font-size: 0.95rem;">
+      <div class="layer" style="padding: 8px 14px;">
+        <div class="layer-num">S</div>
+        <div>
+          <span class="bold accent">Single Responsibility</span><br>
+          <span class="red">Bad:</span> One agent builds features, reviews code, AND deploys<br>
+          <span class="green">Good:</span> <em>Execute Agent</em> builds &rarr; <em>Code Reviewer</em> reviews &rarr; <em>Pipeline Medic</em> deploys
+        </div>
+      </div>
+      <div class="layer" style="padding: 8px 14px;">
+        <div class="layer-num">O</div>
+        <div>
+          <span class="bold accent">Open/Closed</span><br>
+          <span class="red">Bad:</span> Rewrite the agent prompt every time you add a feature<br>
+          <span class="green">Good:</span> Agent reads CLAUDE.md rules &mdash; add new rules without changing the agent
+        </div>
+      </div>
+      <div class="layer" style="padding: 8px 14px;">
+        <div class="layer-num">I</div>
+        <div>
+          <span class="bold accent">Interface Segregation</span><br>
+          <span class="red">Bad:</span> Every agent can read files, write files, run commands, push code<br>
+          <span class="green">Good:</span> Auditors are <em>read-only</em>. Only the Execute Agent can write. Only CI can deploy.
+        </div>
+      </div>
+      <div class="layer" style="padding: 8px 14px;">
+        <div class="layer-num">D</div>
+        <div>
+          <span class="bold accent">Dependency Inversion</span><br>
+          <span class="red">Bad:</span> Agent A calls Agent B directly, creating a fragile chain<br>
+          <span class="green">Good:</span> All agents depend on CLAUDE.md as the shared contract &mdash; swap any agent freely
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 16: Testing -->
+<section class="slide slide-data" data-title="Testing, Testing" data-notes="Hammer the data. This is the 'why guardrails matter' slide.">
+  <div class="slide-inner">
+    <h3>Core Principles</h3>
+    <h2>Testing, Testing, Testing</h2>
+    <p style="font-size: 1.2rem; margin-bottom: 16px;">Unreviewed AI code &mdash; the hard data:</p>
+    <table>
+      <tr><th>Finding</th><th>Detail</th><th>Source</th></tr>
+      <tr><td class="red bold">45% fail OWASP Top 10</td><td>AI code tested across 100+ LLMs</td><td class="small">Veracode, July 2025</td></tr>
+      <tr><td class="red bold">3% vs 21% secure</td><td>Devs with AI wrote secure code 3% of the time; without AI: 21%</td><td class="small">Stanford / Dan Boneh, ACM CCS</td></tr>
+      <tr><td class="red bold">+41% complexity</td><td>Persistent increase in code complexity after AI adoption</td><td class="small">Carnegie Mellon, Nov 2025</td></tr>
+      <tr><td class="red bold">19% slower</td><td>Experienced devs were slower with AI (predicted 24% faster)</td><td class="small">METR Randomized Trial, 2025</td></tr>
+      <tr><td class="red bold">Only 10% scan AI code</td><td>80% of devs bypass security policies for AI output</td><td class="small">Snyk, 2025</td></tr>
+    </table>
+    <p style="margin-top: 18px; text-align: center; font-size: 1.25rem;">
+      The test is the <span class="green bold">contract</span> between you and the agent.
+    </p>
+  </div>
+</section>
+
+<!-- Slide 17: Agent Reviews Agent -->
+<section class="slide" data-title="Agent Reviews Agent" data-notes="Multiple layers of review BEFORE you even see it.">
+  <div class="slide-inner">
+    <h3>Core Principles</h3>
+    <h2>Agent reviews agent</h2>
+    <div class="flow" style="justify-content: center; margin-top: 32px;">
+      <div class="flow-step">Execute Agent<br><span class="small">writes code + tests</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">Scoring Auditor<br><span class="small">verifies formulas</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">Code Reviewer<br><span class="small">checks quality</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="border-color: var(--green); background: var(--green-dim);">You<br><span class="small">final approval</span></div>
+    </div>
+    <blockquote style="margin-top: 32px;">Don't assume &mdash; verify. Have the system spin up a new agent<br>to review what the first agent built.</blockquote>
+  </div>
+</section>
+
+<!-- Slide 18: Definition of Done -->
+<section class="slide" data-title="Definition of Done" data-notes="Make this relatable: it's a punch list before you accept the work, like a home inspection.">
+  <div class="slide-inner">
+    <h3>Core Principles</h3>
+    <h2>Definition of Done</h2>
+    <p style="margin-top: 8px; font-size: 1.1rem; color: var(--text-muted);">Think of it like a home inspection &mdash; you don't accept the work until every item checks out.</p>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px;">
+      <div class="card" style="padding:16px;">
+        <p><span class="green bold" style="font-size:1.3rem;">&#10003;</span> <span class="bold">Data looks right</span></p>
+        <p class="small" style="margin-top:4px;">Does the API return what we expect? Are the fields correct?</p>
+      </div>
+      <div class="card" style="padding:16px;">
+        <p><span class="green bold" style="font-size:1.3rem;">&#10003;</span> <span class="bold">Tests prove it works</span></p>
+        <p class="small" style="margin-top:4px;">Automated checks that say "yes, this does what it's supposed to"</p>
+      </div>
+      <div class="card" style="padding:16px;">
+        <p><span class="green bold" style="font-size:1.3rem;">&#10003;</span> <span class="bold">It runs in production</span></p>
+        <p class="small" style="margin-top:4px;">Not just on my laptop &mdash; it works when real users hit it</p>
+      </div>
+      <div class="card" style="padding:16px;">
+        <p><span class="green bold" style="font-size:1.3rem;">&#10003;</span> <span class="bold">You can explain WHY</span></p>
+        <p class="small" style="margin-top:4px;">If you can't explain the approach, there's probably a hidden bug</p>
+      </div>
+    </div>
+    <blockquote style="margin-top: 18px;">"Done" doesn't mean "it seems to work." It means it <span class="bold" style="color: var(--text);">passed the inspection.</span></blockquote>
+  </div>
+</section>
+
+<!-- Slide 19: Ground in Real Data -->
+<section class="slide" data-title="Real Data" data-notes="Make it concrete: test your APIs, verify what comes back, give the agent real numbers to work with.">
+  <div class="slide-inner">
+    <h3>Core Principles</h3>
+    <h2>Ground agents in <span class="highlight">real data</span></h2>
+    <p style="margin-top: 8px; font-size: 1.1rem; color: var(--text-muted);">Don't guess. Measure. Then tell the agent what you measured.</p>
+    <div class="grid-2" style="margin-top: 20px;">
+      <div>
+        <p style="margin-bottom: 10px;"><span class="red bold">What most people do:</span></p>
+        <div class="code"><span class="str">"Make the API calls work
+and handle errors."</span>
+
+<span class="cmt">→ No idea what "work" means</span>
+<span class="cmt">→ No idea what errors look like</span>
+<span class="cmt">→ Agent guesses. Guesses wrong.</span></div>
+      </div>
+      <div>
+        <p style="margin-bottom: 10px;"><span class="green bold">What I do instead:</span></p>
+        <div class="code"><span class="kw">1. Call the API. See what comes back.</span>
+   <span class="str">{ id: "abc", visibility: 0.73,
+     platform: "chatgpt" }</span>
+
+<span class="kw">2. Write a test for that shape.</span>
+   <span class="cmt">→ "Does it have id? Is visibility
+      a number between 0-1?"</span>
+
+<span class="kw">3. Give the agent real benchmarks.</span>
+   <span class="cmt">→ "ChatGPT responds in 58s.
+      Timeout at 70s. Alert at 90s."</span></div>
+      </div>
+    </div>
+    <blockquote style="margin-top: 18px;">Agents make great decisions when you give them <span class="bold" style="color: var(--text);">great data</span> &mdash; not vague instructions.</blockquote>
+  </div>
+</section>
+
+<!-- ==================== SAFETY & ANTI-PATTERNS ==================== -->
+
+<!-- Slide 20: Four Layers of Safety -->
+<section class="slide" data-title="Four Layers of Safety" data-notes="Use the contractor analogy for non-technical folks.">
+  <div class="slide-inner">
+    <h3>Safety &amp; Guardrails</h3>
+    <h2>Four layers of safety</h2>
+    <div class="layers">
+      <div class="layer">
+        <div class="layer-num">1</div>
+        <div><span class="bold">The Handbook</span> <span class="small">(what they should do)</span><br><span class="small">CLAUDE.md rules &mdash; like project specs for a contractor</span></div>
+      </div>
+      <div class="layer">
+        <div class="layer-num">2</div>
+        <div><span class="bold">Locked Rooms</span> <span class="small">(what they can't touch)</span><br><span class="small">Database, payments, config &mdash; "don't touch the electrical without a permit"</span></div>
+      </div>
+      <div class="layer">
+        <div class="layer-num">3</div>
+        <div><span class="bold">Security Cameras</span> <span class="small">(what they did)</span><br><span class="small">Complete audit trail of every file opened, changed, command run</span></div>
+      </div>
+      <div class="layer">
+        <div class="layer-num">4</div>
+        <div><span class="bold">The Final Gate</span> <span class="small">(human approval)</span><br><span class="small">Nothing reaches customers without you approving it. Period.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 21: Hooks -->
+<section class="slide" data-title="Hooks: Enforcement" data-notes="Hooks fire EVERY time. Instructions can be forgotten. Hooks can't.">
+  <div class="slide-inner">
+    <h3>Safety &amp; Guardrails</h3>
+    <h2>Hooks: enforcement that <span class="highlight">never forgets</span></h2>
+    <div class="code" style="margin-top: 14px;"><span class="cmt"># Block dangerous commands automatically</span>
+
+<span class="kw">hook:</span> pre-command
+<span class="kw">block if contains:</span>
+  <span class="warn">rm -rf</span>           <span class="cmt">→ no mass deletion</span>
+  <span class="warn">git push --force</span>  <span class="cmt">→ no rewriting history</span>
+  <span class="warn">prisma db push</span>   <span class="cmt">→ no schema changes</span>
+  <span class="warn">DROP TABLE</span>       <span class="cmt">→ no data destruction</span>
+
+<span class="cmt"># These fire every time. Not guidelines — gates.</span></div>
+    <blockquote style="margin-top: 18px;">Instructions can be forgotten. Hooks <span class="bold" style="color: var(--text);">can't.</span></blockquote>
+  </div>
+</section>
+
+<!-- Slide: Critical Rules — What Happens Without Guardrails -->
+<section class="slide" data-title="Critical Rules" data-notes="Now that they've seen Hooks, tell the story: Claude deleted my entire Peekaboo production database. That's WHY these rules and hooks exist. Pause and let it land.">
+  <div class="slide-inner">
+    <h3>Safety &amp; Guardrails</h3>
+    <h2>Real rules from my CLAUDE.md</h2>
+    <div class="grid-2" style="margin-top: 14px;">
+      <div>
+        <div class="code" style="font-size: 0.9rem;"><span class="warn">🚨 CRITICAL DATABASE SAFETY RULE 🚨</span>
+NEVER run <span class="kw">`npx prisma db push --accept-data-loss`</span>
+without explicit user permission.
+NEVER drop tables or columns without backup confirmation.
+NEVER modify schema.prisma without review.
+
+<span class="warn">🚨 CRITICAL DEPLOYMENT RULES 🚨</span>
+NEVER force push to <span class="kw">main</span>.
+NEVER skip tests before merging.
+NEVER modify auth or billing code without review.
+
+<span class="cmt"># File restrictions</span>
+<span class="kw">schema.prisma</span>  → locked (database structure)
+<span class="kw">stripe.ts</span>      → locked (payment processing)
+<span class="kw">.env</span>           → locked (secrets)</div>
+      </div>
+      <div>
+        <div class="card" style="border-color: rgba(248,113,113,0.3); margin-bottom: 14px;">
+          <p class="red bold" style="font-size: 1.1rem;">Why this rule exists:</p>
+          <p style="font-size: 1.05rem; margin-top: 8px;">Claude ran <code style="color: var(--red);">prisma db push --accept-data-loss</code> on my <span class="bold">production Peekaboo database.</span></p>
+          <p style="font-size: 1.05rem; margin-top: 8px;">Entire database &mdash; deleted.</p>
+        </div>
+        <div class="card" style="border-color: rgba(52,211,153,0.3);">
+          <p class="green bold" style="font-size: 1.1rem;">The lesson:</p>
+          <p style="font-size: 1.05rem; margin-top: 8px;">Backups saved most of it. But some customer data was permanently lost. <span class="bold">Every rule in this file was written in blood.</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide: Vibe Coding vs Agent Engineering -->
+<section class="slide" data-title="Vibe vs Engineering" data-notes="This is the central contrast of the talk. Let the table do the work.">
+  <div class="slide-inner">
+    <h3>Safety &amp; Guardrails</h3>
+    <h2>Vibe coding vs. agent engineering</h2>
+    <table style="margin-top: 20px;">
+      <tr><th style="color: var(--red);">Vibe Coding</th><th style="color: var(--green);">Agent Engineering</th></tr>
+      <tr><td>No constitution</td><td class="green">38KB CLAUDE.md</td></tr>
+      <tr><td>No tests</td><td class="green">Testing-first, agent-reviews-agent</td></tr>
+      <tr><td>No review</td><td class="green">Human reviews every PR</td></tr>
+      <tr><td>No guardrails</td><td class="green">Hooks + locked files + build gates</td></tr>
+      <tr><td>"It works on my machine"</td><td class="green">Definition of Done enforced</td></tr>
+    </table>
+    <p style="margin-top: 18px; text-align: center; font-size: 1.2rem; color: var(--text-muted);">
+      The engineering principles don't go away because the author is artificial.
+    </p>
+  </div>
+</section>
+
+<!-- Slide 23: Cautionary Tales -->
+<section class="slide slide-data" data-title="Cautionary Tales" data-notes="Real incidents. Let the audience feel the weight of what happens without guardrails.">
+  <div class="slide-inner">
+    <h3>Safety &amp; Guardrails</h3>
+    <h2>When guardrails are missing</h2>
+    <div class="layers" style="margin-top: 14px;">
+      <div class="layer" style="border-color: rgba(248,113,113,0.2);">
+        <div class="layer-num" style="background: var(--red);">!</div>
+        <div><span class="bold">Moltbook (Jan 2026)</span><br><span class="small">AI built the backend, never enabled Row Level Security. <span class="red bold">1.5M API keys leaked</span> in 3 days.</span></div>
+      </div>
+      <div class="layer" style="border-color: rgba(248,113,113,0.2);">
+        <div class="layer-num" style="background: var(--red);">!</div>
+        <div><span class="bold">Replit (2025)</span><br><span class="small">AI tool deleted a live database during a code freeze. <span class="red bold">1,200 executives' data wiped.</span></span></div>
+      </div>
+      <div class="layer" style="border-color: rgba(248,113,113,0.2);">
+        <div class="layer-num" style="background: var(--red);">!</div>
+        <div><span class="bold">The Vibe Coding Hangover</span><br><span class="small">~10,000 startups built with AI. <span class="red bold">8,000+ now need rescue engineering</span> ($50K–$500K each).</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== RESULTS ==================== -->
+
+<!-- Slide 24: What I've Built — Portfolio -->
+<section class="slide slide-hero" data-title="What I've Built" data-notes="Show breadth. You're not a one-trick pony — this is a pattern that works across products.">
+  <div class="slide-inner">
+    <h3>Real Results</h3>
+    <h2>What I've built with AI agents</h2>
+    <div class="grid-3" style="margin-top: 16px;">
+      <div class="card card-glow">
+        <div class="product-header">
+          <img src="icon-peekaboo.png" alt="" class="product-icon">
+          <span class="bold" style="font-size: 1.1rem;">Peekaboo</span>
+          <span class="tag tag-green" style="font-size: 0.7rem;">Customers</span>
+        </div>
+        <p style="font-size: 0.95rem;">Brand visibility analytics across 5 AI platforms. 1,162 commits, 13 agents.</p>
+      </div>
+      <div class="card">
+        <div class="product-header">
+          <img src="icon-tickettopr.png" alt="" class="product-icon">
+          <span class="bold" style="font-size: 1.1rem;">TicketToPR</span>
+          <span class="tag tag-accent" style="font-size: 0.7rem;">Open source</span>
+        </div>
+        <p style="font-size: 0.95rem;">Notion-to-PR automation. AI scores feasibility, builds features, creates PRs. On npm.</p>
+      </div>
+      <div class="card">
+        <div class="product-header">
+          <img src="icon-subredditsignals.png" alt="" class="product-icon">
+          <span class="bold" style="font-size: 1.1rem;">SubredditSignals</span>
+        </div>
+        <p style="font-size: 0.95rem;">Reddit lead intelligence. AI-scored leads, sentiment analysis, estimated deal value.</p>
+      </div>
+      <div class="card">
+        <div class="product-header">
+          <img src="icon-narrativenooks.png" alt="" class="product-icon">
+          <span class="bold" style="font-size: 1.1rem;">Narrative Nooks</span>
+        </div>
+        <p style="font-size: 0.95rem;">AI-powered personalized children's stories. Custom illustrations and interactive reading.</p>
+      </div>
+      <div class="card">
+        <div class="product-header">
+          <img src="icon-locala.webp" alt="" class="product-icon invert">
+          <span class="bold" style="font-size: 1.1rem;">Locala</span>
+        </div>
+        <p style="font-size: 0.95rem;">Local business discovery platform. Location-based recommendations and search.</p>
+      </div>
+      <div class="card">
+        <div class="product-header">
+          <img src="icon-mochi.png" alt="" class="product-icon">
+          <span class="bold" style="font-size: 1.1rem;">Mochi</span>
+        </div>
+        <p style="font-size: 0.95rem;">Reddit content strategy &amp; scheduling. AI-powered subreddit analysis and auto-posting.</p>
+      </div>
+    </div>
+    <p class="small" style="text-align: center; margin-top: 14px;">All built with the same approach: CLAUDE.md + specialist agents + human review.</p>
+  </div>
+</section>
+
+<!-- Slide: Peekaboo Deep Dive -->
+<section class="slide" data-title="Peekaboo" data-notes="Let the screenshot and stats do the talking. 'This is a real product with real customers. Not a demo. Traditional equivalent: 3-5 devs, 4-6 months, $200K+.'">
+  <div class="slide-inner">
+    <h3>Peekaboo &mdash; aipeekaboo.com</h3>
+    <h2>Built by one person + 13 AI agents</h2>
+    <div class="grid-2" style="margin-top: 14px;">
+      <div>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px;">
+          <div style="text-align: center;">
+            <p class="big-stat" style="font-size: 1.8rem;">10M+</p>
+            <p class="small">sources analyzed</p>
+          </div>
+          <div style="text-align: center;">
+            <p class="big-stat" style="font-size: 1.8rem;">3M+</p>
+            <p class="small">AI responses</p>
+          </div>
+          <div style="text-align: center;">
+            <p class="big-stat" style="font-size: 1.8rem;">5</p>
+            <p class="small">AI models</p>
+          </div>
+          <div style="text-align: center;">
+            <p class="big-stat" style="font-size: 1.8rem;">24/7</p>
+            <p class="small">automated</p>
+          </div>
+        </div>
+        <img src="peekaboo-dashboard.png" alt="Peekaboo Dashboard" class="screenshot" style="max-height: 34vh; display: block;">
+      </div>
+      <div>
+        <div class="card" style="margin-bottom: 12px;">
+          <p class="accent semibold" style="font-size: 1rem;">What Peekaboo tracks</p>
+          <p style="font-size: 1.0rem; margin-top: 8px;">How brands appear in ChatGPT, Gemini, Perplexity, Google AI Mode, and Google AI Overview. Competitive intelligence, visibility scoring, traffic estimates.</p>
+        </div>
+        <div class="card">
+          <p class="accent semibold" style="font-size: 1rem;">Traditional equivalent</p>
+          <p style="font-size: 1.0rem; margin-top: 8px;">3–5 developers, 4–6 months, $200K+ in salary. Built by <span class="green bold">one person</span> + AI agents at a fraction of the cost.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 27: The Mindset Shift -->
+<section class="slide" data-title="Mindset Shift" data-notes="This is the 'aha' moment. Pause after 'The agents handle implementation.'">
+  <div class="slide-inner center">
+    <h3>Mindset</h3>
+    <h2>The shift</h2>
+    <div class="grid-2" style="margin-top: 28px;">
+      <div class="card" style="text-align: center;">
+        <p class="small" style="margin-bottom: 14px; color: var(--text-muted);">Before</p>
+        <p style="font-size: 1.4rem;">Write code all day</p>
+        <p style="font-size: 1.4rem; margin-top: 8px;">Debug all night</p>
+        <p style="font-size: 1.4rem; margin-top: 8px;">No time for product</p>
+      </div>
+      <div class="card card-glow" style="text-align: center;">
+        <p class="small" style="margin-bottom: 14px; color: var(--accent);">After</p>
+        <p style="font-size: 1.4rem;"><span class="accent bold">Architecture</span> &amp; design</p>
+        <p style="font-size: 1.4rem; margin-top: 8px;"><span class="accent bold">Product strategy</span></p>
+        <p style="font-size: 1.4rem; margin-top: 8px;"><span class="accent bold">Code review</span> &amp; customer calls</p>
+      </div>
+    </div>
+    <p style="margin-top: 28px; font-size: 1.45rem;">
+      Agents handle the <span class="bold">implementation</span>. You handle the <span class="highlight">thinking</span>.
+    </p>
+  </div>
+</section>
+
+<!-- Slide 28: The Feedback Loop -->
+<section class="slide" data-title="Feedback Loop" data-notes="'Unlike human team members, agents actually read the post-mortem every time.'">
+  <div class="slide-inner">
+    <h3>Mindset</h3>
+    <h2>The feedback loop</h2>
+    <div class="flow" style="justify-content: center; margin-top: 40px;">
+      <div class="flow-step">Agent makes<br>a mistake</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step active-step">Update<br>CLAUDE.md</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="border-color: var(--green); background: var(--green-dim);">Never repeats<br>that mistake</div>
+    </div>
+    <blockquote style="margin-top: 40px; text-align: center;">
+      Unlike human team members, agents actually read the post-mortem document <span class="bold" style="color: var(--text);">every single time.</span>
+    </blockquote>
+  </div>
+</section>
+
+<!-- ==================== CLOSING ==================== -->
+
+<!-- Slide 29: Free Resource -->
+<section class="slide slide-hero" data-title="Free Resource" data-notes="Give them the URL. Let them photograph the screen. Pause here.">
+  <div class="slide-inner center">
+    <h3>Free &amp; Open Source</h3>
+    <h2 style="font-size: 1.9rem;">github.com/JohnRiceML/<span class="highlight">ai-agent-playbook</span></h2>
+    <div class="grid-2" style="margin-top: 28px; text-align: left;">
+      <div>
+        <ul>
+          <li>Starter CLAUDE.md template</li>
+          <li>Agent spec templates</li>
+          <li>Real examples (scoring auditor, pipeline medic)</li>
+        </ul>
+      </div>
+      <div>
+        <ul>
+          <li>Founder guide &mdash; manage AI without coding</li>
+          <li>Developer guide &mdash; engineering principles</li>
+          <li>Core principles &mdash; KISS, SOLID, testing, DoD</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 30: One Takeaway -->
+<section class="slide slide-hero" data-title="One Takeaway" data-notes="End strong. Pause after 'AI solves the how, not the what.' Let it land, then close with the YC quote.">
+  <div class="slide-inner center">
+    <h2 style="font-size: 3rem; margin-bottom: 28px;">
+      AI solves the <span class="accent bold">how</span>,<br>not the <span class="accent2 bold">what</span>.
+    </h2>
+    <p style="font-size: 1.45rem; color: var(--text-muted); max-width: 780px; margin: 0 auto; line-height: 1.6;">
+      Your job is knowing what to build.<br>
+      Start with a CLAUDE.md. Add one rule. See what happens.
+    </p>
+    <blockquote style="margin-top: 36px; max-width: 780px; margin-left: auto; margin-right: auto; text-align: center;">
+      "Cursor and Claude Code are great at helping build software once it's clear what needs to be built. But the most important part is figuring out what to build in the first place."
+      <br><span class="small" style="font-style: normal;">&mdash; Y Combinator, Spring 2026</span>
+    </blockquote>
+  </div>
+</section>
+
+<!-- Slide 31: QR Codes & Links -->
+<section class="slide slide-hero" data-title="Connect & Resources" data-notes="Leave this up during Q&A. Let people scan. Give them time.">
+  <div class="slide-inner center">
+    <h2 style="margin-bottom: 28px;">Let's connect</h2>
+    <div style="display: flex; gap: 40px; justify-content: center; flex-wrap: wrap;">
+      <div style="text-align: center;">
+        <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin-bottom: 10px;">
+          <img src="qr-playbook.png" alt="AI Agent Playbook QR" style="width: 160px; height: 160px; display: block;">
+        </div>
+        <p class="bold" style="font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <span style="font-size: 1.3rem;">📖</span> AI Agent Playbook
+        </p>
+        <p class="small" style="color: var(--text-muted);">Free templates, guides &amp; examples</p>
+      </div>
+      <div style="text-align: center;">
+        <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin-bottom: 10px;">
+          <img src="qr-peekaboo.png" alt="Peekaboo QR" style="width: 160px; height: 160px; display: block;">
+        </div>
+        <p class="bold" style="font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <img src="icon-peekaboo.png" alt="" style="width: 22px; height: 22px; border-radius: 5px;"> Peekaboo
+        </p>
+        <p class="small" style="color: var(--text-muted);">aipeekaboo.com</p>
+      </div>
+      <div style="text-align: center;">
+        <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin-bottom: 10px;">
+          <img src="qr-tickettopr.png" alt="TicketToPR QR" style="width: 160px; height: 160px; display: block;">
+        </div>
+        <p class="bold" style="font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <img src="icon-tickettopr.png" alt="" style="width: 22px; height: 22px; border-radius: 5px;"> TicketToPR
+        </p>
+        <p class="small" style="color: var(--text-muted);">tickettopr.com</p>
+      </div>
+    </div>
+    <div style="margin-top: 28px; display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; font-size: 1.1rem;">
+      <span><span class="accent bold">GitHub:</span> JohnRiceML</span>
+      <span><span class="accent bold">LinkedIn:</span> /in/johnwilliamrice</span>
+      <span><span class="accent bold">X:</span> @JohnRiceML</span>
+    </div>
+    <p style="margin-top: 20px; font-size: 1.5rem; color: var(--text-muted);">Thank you! Questions?</p>
+  </div>
+</section>
+
+<!-- Slide Overview -->
+<div id="overview">
+  <div id="overview-grid"></div>
+</div>
+
+<!-- Presenter Notes -->
+<div id="notes-panel">
+  <div class="notes-label">Presenter Notes</div>
+  <div id="notes-content"></div>
+</div>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  const progress = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+  const overview = document.getElementById('overview');
+  const overviewGrid = document.getElementById('overview-grid');
+  const notesPanel = document.getElementById('notes-panel');
+  const notesContent = document.getElementById('notes-content');
+  const themeToggle = document.getElementById('theme-toggle');
+  let current = 0;
+  let notesVisible = false;
+
+  function updateMugTheme(light) {
+    const mugBody = document.querySelector('#mug-wrap svg path[fill*="mug-body-grad"]');
+    if (mugBody) mugBody.setAttribute('fill', light ? 'url(#mug-body-grad-light)' : 'url(#mug-body-grad)');
+  }
+
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isLight = html.getAttribute('data-theme') === 'light';
+    if (isLight) {
+      html.removeAttribute('data-theme');
+      themeToggle.innerHTML = '&#9790;';
+    } else {
+      html.setAttribute('data-theme', 'light');
+      themeToggle.innerHTML = '&#9788;';
+    }
+    updateMugTheme(!isLight);
+    try { sessionStorage.setItem('theme', isLight ? 'dark' : 'light'); } catch(e) {}
+  }
+
+  function showSlide(n) {
+    if (n < 0 || n >= total) return;
+    slides[current].classList.remove('active');
+    current = n;
+    slides[current].classList.add('active');
+    progress.style.width = ((current + 1) / total * 100) + '%';
+    counter.textContent = (current + 1) + ' / ' + total;
+    const noteText = slides[current].getAttribute('data-notes') || '';
+    notesContent.textContent = noteText;
+    overviewGrid.querySelectorAll('.overview-thumb').forEach((t, i) => {
+      t.classList.toggle('current', i === current);
+    });
+    try { sessionStorage.setItem('slide', current); } catch(e) {}
+  }
+
+  function next() { if (overview.classList.contains('visible')) return; showSlide(current + 1); }
+  function prev() { if (overview.classList.contains('visible')) return; showSlide(current - 1); }
+
+  function toggleOverview() {
+    overview.classList.toggle('visible');
+    if (overview.classList.contains('visible')) buildOverview();
+  }
+
+  function toggleNotes() {
+    notesVisible = !notesVisible;
+    notesPanel.classList.toggle('visible', notesVisible);
+  }
+
+  function buildOverview() {
+    overviewGrid.innerHTML = '';
+    slides.forEach((s, i) => {
+      const thumb = document.createElement('div');
+      thumb.className = 'overview-thumb' + (i === current ? ' current' : '');
+      const title = s.getAttribute('data-title') || 'Slide ' + (i + 1);
+      thumb.innerHTML = '<div class="thumb-num">' + (i + 1) + '</div><div class="thumb-title">' + title + '</div>';
+      thumb.addEventListener('click', () => {
+        showSlide(i);
+        overview.classList.remove('visible');
+      });
+      overviewGrid.appendChild(thumb);
+    });
+  }
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { e.preventDefault(); showSlide(0); }
+    else if (e.key === 'End') { e.preventDefault(); showSlide(total - 1); }
+    else if (e.key === 'Escape') { e.preventDefault(); toggleOverview(); }
+    else if (e.key === 'n' || e.key === 'N') { toggleNotes(); }
+    else if (e.key === 'l' || e.key === 'L') { toggleTheme(); }
+  });
+
+  // Click navigation
+  document.addEventListener('click', (e) => {
+    if (overview.classList.contains('visible')) return;
+    if (e.target.closest('#notes-panel') || e.target.closest('#counter') || e.target.closest('#theme-toggle')) return;
+    const x = e.clientX / window.innerWidth;
+    if (x > 0.5) next(); else prev();
+  });
+
+  // Touch support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) { if (dx < 0) next(); else prev(); }
+  });
+
+  // Set animation stagger indices on all slides
+  slides.forEach(s => {
+    const inner = s.querySelector('.slide-inner');
+    if (!inner) return;
+    // Direct children of slide-inner
+    Array.from(inner.children).forEach((child, i) => {
+      child.style.setProperty('--i', i);
+    });
+    // Grid children
+    s.querySelectorAll('.grid-2 > *, .grid-3 > *, .grid-4 > *').forEach((el, i) => {
+      el.style.setProperty('--gi', i);
+    });
+    // Flow steps
+    s.querySelectorAll('.flow > *').forEach((el, i) => {
+      el.style.setProperty('--fi', i);
+    });
+    // Layer items
+    s.querySelectorAll('.layers > *').forEach((el, i) => {
+      el.style.setProperty('--li', i);
+    });
+    // Org chart elements
+    s.querySelectorAll('.org-chart > *').forEach((el, i) => {
+      el.style.setProperty('--oi', i);
+    });
+    // Table rows
+    s.querySelectorAll('tr').forEach((el, i) => {
+      el.style.setProperty('--ti', i);
+    });
+    // Project badges
+    s.querySelectorAll('.project-row > *').forEach((el, i) => {
+      el.style.setProperty('--pi', i);
+    });
+    // Timeline items
+    s.querySelectorAll('.timeline-item').forEach((el, i) => {
+      el.style.setProperty('--tli', i);
+    });
+  });
+
+  // Restore theme
+  try {
+    const savedTheme = sessionStorage.getItem('theme');
+    if (savedTheme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+      themeToggle.innerHTML = '&#9788;';
+      updateMugTheme(true);
+    }
+  } catch(e) {}
+
+  // Theme toggle click
+  themeToggle.addEventListener('click', toggleTheme);
+
+  // Restore position
+  let startSlide = 0;
+  try { startSlide = parseInt(sessionStorage.getItem('slide')) || 0; } catch(e) {}
+  if (startSlide >= total) startSlide = 0;
+  showSlide(startSlide);
+
+  // ---- Coffee Fluid Simulation ----
+  (function fluidSim() {
+    const canvas = document.getElementById('coffee-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    // --- Tunable parameters (exposed to UI) ---
+    let GW = 192, GH = 108;
+    let SIZE = GW * GH;
+    let IX = (i, j) => i + j * GW;
+    let u, v, u0, v0, d, d0;
+
+    let P = {
+      dt: 0.04,
+      diff: 0.00001,
+      visc: 0.00001,
+      damping: 0.9994,
+      surfacePct: 0.18,
+      deepRecovery: 0.015,
+      surfRecovery: 0.003,
+      aboveKill: 0.55,
+      aboveKillHard: 0.2,
+      impactMult: 480,
+      craterForce: 1.8,
+      splashUp: 0.4,
+      gravity: 0.012,
+      dropGravity: 0.00012,
+      dropInterval: 300,
+      physTick: 3,
+    };
+    let SURFACE = Math.floor(GH * P.surfacePct);
+    let frame = 0;
+
+    let filling = true;
+    let fillSurface = 0;
+    let fillSettle = 0; // frames to settle after fill before drops start
+
+    function initGrid(skipFill) {
+      SIZE = GW * GH;
+      IX = (i, j) => i + j * GW;
+      u = new Float32Array(SIZE); v = new Float32Array(SIZE);
+      u0 = new Float32Array(SIZE); v0 = new Float32Array(SIZE);
+      d = new Float32Array(SIZE); d0 = new Float32Array(SIZE);
+      SURFACE = Math.floor(GH * P.surfacePct);
+      frame = 0;
+      drops.length = 0; splashes.length = 0;
+      if (skipFill) {
+        filling = false;
+        fillSurface = SURFACE;
+        for (let j = 0; j < GH; j++)
+          for (let i = 0; i < GW; i++) {
+            if (j >= SURFACE) d[IX(i,j)] = 1.0;
+            else if (j >= SURFACE - 2) {
+              const t = (j - (SURFACE - 2)) / 2;
+              d[IX(i,j)] = t * t * 0.9;
+            }
+          }
+      } else {
+        filling = true;
+        fillSurface = GH - 1;
+        fillSettle = 0;
+      }
+    }
+    // Forward-declare for initGrid
+    const drops = [], splashes = [];
+    initGrid();
+
+    function setBnd(b, x) {
+      for (let i = 1; i < GW-1; i++) {
+        x[IX(i,0)]    = b===2 ? -x[IX(i,1)]    : x[IX(i,1)];
+        x[IX(i,GH-1)] = b===2 ? -x[IX(i,GH-2)] : x[IX(i,GH-2)];
+      }
+      for (let j = 1; j < GH-1; j++) {
+        x[IX(0,j)]    = b===1 ? -x[IX(1,j)]    : x[IX(1,j)];
+        x[IX(GW-1,j)] = b===1 ? -x[IX(GW-2,j)] : x[IX(GW-2,j)];
+      }
+      x[IX(0,0)]=0.5*(x[IX(1,0)]+x[IX(0,1)]);
+      x[IX(0,GH-1)]=0.5*(x[IX(1,GH-1)]+x[IX(0,GH-2)]);
+      x[IX(GW-1,0)]=0.5*(x[IX(GW-2,0)]+x[IX(GW-1,1)]);
+      x[IX(GW-1,GH-1)]=0.5*(x[IX(GW-2,GH-1)]+x[IX(GW-1,GH-2)]);
+    }
+
+    function diffuse(b, x, x0, df) {
+      const a = P.dt * df * GW * GH;
+      if (a < 1e-10) { x.set(x0); return; }
+      for (let k = 0; k < 4; k++) {
+        for (let j = 1; j < GH-1; j++)
+          for (let i = 1; i < GW-1; i++)
+            x[IX(i,j)] = (x0[IX(i,j)] + a*(x[IX(i-1,j)]+x[IX(i+1,j)]+x[IX(i,j-1)]+x[IX(i,j+1)]))/(1+4*a);
+        setBnd(b, x);
+      }
+    }
+
+    function advect(b, dd, dd0, uu, vv) {
+      for (let j = 1; j < GH-1; j++) {
+        for (let i = 1; i < GW-1; i++) {
+          let x = i - P.dt * GW * uu[IX(i,j)];
+          let y = j - P.dt * GH * vv[IX(i,j)];
+          x = Math.max(0.5, Math.min(GW-1.5, x));
+          y = Math.max(0.5, Math.min(GH-1.5, y));
+          const i0=x|0, j0=y|0, i1=i0+1, j1=j0+1;
+          const s1=x-i0, s0=1-s1, t1=y-j0, t0=1-t1;
+          dd[IX(i,j)] = s0*(t0*dd0[IX(i0,j0)]+t1*dd0[IX(i0,j1)])+s1*(t0*dd0[IX(i1,j0)]+t1*dd0[IX(i1,j1)]);
+        }
+      }
+      setBnd(b, dd);
+    }
+
+    function project() {
+      const p = u0, div = v0;
+      for (let j = 1; j < GH-1; j++)
+        for (let i = 1; i < GW-1; i++) {
+          div[IX(i,j)] = -0.5*((u[IX(i+1,j)]-u[IX(i-1,j)])/GW + (v[IX(i,j+1)]-v[IX(i,j-1)])/GH);
+          p[IX(i,j)] = 0;
+        }
+      setBnd(0,div); setBnd(0,p);
+      for (let k = 0; k < 6; k++) {
+        for (let j = 1; j < GH-1; j++)
+          for (let i = 1; i < GW-1; i++)
+            p[IX(i,j)] = (div[IX(i,j)]+p[IX(i-1,j)]+p[IX(i+1,j)]+p[IX(i,j-1)]+p[IX(i,j+1)])/4;
+        setBnd(0,p);
+      }
+      for (let j = 1; j < GH-1; j++)
+        for (let i = 1; i < GW-1; i++) {
+          u[IX(i,j)] -= 0.5*GW*(p[IX(i+1,j)]-p[IX(i-1,j)]);
+          v[IX(i,j)] -= 0.5*GH*(p[IX(i,j+1)]-p[IX(i,j-1)]);
+        }
+      setBnd(1,u); setBnd(2,v);
+    }
+
+    function step() {
+      const t = frame * 0.02;
+      SURFACE = Math.floor(GH * P.surfacePct);
+      for (let j = 1; j < GH-1; j++) {
+        for (let i = 1; i < GW-1; i++) {
+          const idx = IX(i,j);
+          if (d[idx] < 0.3) continue;
+          u0[idx] += Math.sin(t*0.3 + j*0.15) * 0.018;
+          v0[idx] += Math.cos(t*0.25 + i*0.12) * 0.014;
+          v0[idx] += P.gravity * d[idx];
+          u[idx] *= P.damping; v[idx] *= P.damping;
+        }
+      }
+
+      for (let i=0;i<SIZE;i++) { u[i]+=P.dt*u0[i]; v[i]+=P.dt*v0[i]; }
+      let tmp;
+      tmp=u0; u0=u; u=tmp; diffuse(1,u,u0,P.visc);
+      tmp=v0; v0=v; v=tmp; diffuse(2,v,v0,P.visc);
+      project();
+      tmp=u0; u0=u; u=tmp; tmp=v0; v0=v; v=tmp;
+      advect(1,u,u0,u0,v0); advect(2,v,v0,u0,v0);
+      project();
+
+      for (let i=0;i<SIZE;i++) d0[i]=d[i];
+      diffuse(0,d,d0,P.diff);
+      tmp=d0; d0=d; d=tmp; advect(0,d,d0,u,v);
+
+      for (let j = 0; j < GH; j++) {
+        for (let i = 0; i < GW; i++) {
+          const idx = IX(i,j);
+          if (j >= SURFACE + 5) {
+            d[idx] += (1.0 - d[idx]) * P.deepRecovery;
+          } else if (j >= SURFACE) {
+            d[idx] += (0.9 - d[idx]) * P.surfRecovery;
+          } else if (j >= SURFACE - 3) {
+            d[idx] *= P.aboveKill;
+          } else {
+            d[idx] *= P.aboveKillHard;
+          }
+          if (d[idx] < 0) d[idx] = 0;
+        }
+      }
+      u0.fill(0); v0.fill(0);
+      frame++;
+    }
+
+    // ---- Drops ----
+    let dropTimer = 0;
+
+    function updateDrops() {
+      const surfY = SURFACE / GH;
+
+      // Spawn one drop every ~5 seconds, only 1 in flight at a time
+      // Drops fall from top of the slide window, not top of the mug
+      dropTimer++;
+      if (dropTimer >= P.dropInterval && drops.length < 1) {
+        dropTimer = 0;
+        const slideEl = canvas.closest('.slide');
+        const mugRect = canvas.getBoundingClientRect();
+        const slideRect = slideEl ? slideEl.getBoundingClientRect() : mugRect;
+        // Spawn Y in mug-normalized coords: top of slide = negative value
+        const spawnY = -((mugRect.top - slideRect.top) / mugRect.height) - 0.03;
+        drops.push({
+          x: 0.15 + Math.random() * 0.55,
+          y: spawnY,
+          vy: 0.0003,
+          r: 12 + Math.random() * 6
+        });
+      }
+
+      for (let i = drops.length - 1; i >= 0; i--) {
+        const drop = drops[i];
+        drop.vy += P.dropGravity;
+        drop.y += drop.vy;
+
+        // Hit surface
+        if (drop.y >= surfY - 0.008) {
+          const gi = (drop.x * (GW - 1)) | 0;
+          const gj = SURFACE;
+          const impactStr = drop.vy * P.impactMult;
+          const rad = 14 + Math.floor(drop.r / 2);
+
+          // Heavy splash — concentric wave rings in the fluid
+          for (let dj = -rad; dj <= rad; dj++) {
+            for (let di = -rad; di <= rad; di++) {
+              const ii = gi+di, jj = gj+dj;
+              if (ii>0 && ii<GW-1 && jj>0 && jj<GH-1) {
+                const dist = Math.sqrt(di*di+dj*dj) + 0.5;
+                if (dist > rad) continue;
+                const f = 1 - dist/rad;
+                const f2 = f * f;
+                // Center crater: deep downward plunge
+                if (dist < rad * 0.3) {
+                  v[IX(ii,jj)] += impactStr * f2 * P.craterForce;
+                }
+                // Inner ring: splash upward + outward (creates the rebound)
+                if (dist > rad * 0.2 && dist < rad * 0.55) {
+                  u[IX(ii,jj)] += (di/dist) * impactStr * f * 1.0;
+                  v[IX(ii,jj)] -= impactStr * f * P.splashUp;
+                }
+                // Outer ring: lateral waves + slight uplift
+                if (dist > rad * 0.45 && dist < rad) {
+                  u[IX(ii,jj)] += (di/dist) * impactStr * f * 0.5;
+                  v[IX(ii,jj)] -= impactStr * f * 0.1;
+                }
+                d[IX(ii,jj)] = Math.min(1, d[IX(ii,jj)] + f2 * 0.5);
+              }
+            }
+          }
+
+          // Spawn splash animation
+          splashes.push({
+            x: drop.x, y: surfY,
+            r: drop.r,
+            ring: 0,          // expanding ring radius (normalized)
+            crownH: 1.0,      // crown height
+            life: 0,
+            secondary: []     // tiny secondary droplets
+          });
+          // Spawn 3-5 secondary droplets that fly upward
+          const numSec = 3 + Math.floor(Math.random() * 3);
+          const sp = splashes[splashes.length - 1];
+          for (let s = 0; s < numSec; s++) {
+            sp.secondary.push({
+              x: drop.x + (Math.random() - 0.5) * 0.02,
+              y: surfY,
+              vx: (Math.random() - 0.5) * 0.002,
+              vy: -0.003 - Math.random() * 0.003,
+              r: 2 + Math.random() * 2,
+              life: 0
+            });
+          }
+
+          drops.splice(i, 1);
+        }
+      }
+
+      // Update splashes
+      for (let i = splashes.length - 1; i >= 0; i--) {
+        const sp = splashes[i];
+        sp.life += 0.012; // slower splash animation to match slower fluid
+        sp.ring = sp.life * 2.5;
+        sp.crownH = Math.max(0, 1 - sp.life * 1.5);
+        // Update secondary droplets
+        for (const sec of sp.secondary) {
+          sec.vy += 0.00025; // gravity
+          sec.x += sec.vx;
+          sec.y += sec.vy;
+          sec.life += 0.016;
+        }
+        if (sp.life > 1.6) splashes.splice(i, 1);
+      }
+    }
+
+    // ---- Rendering ----
+    const RENDER_W = 960, RENDER_H = 540;
+    const offscreen = document.createElement('canvas');
+    offscreen.width = RENDER_W;
+    offscreen.height = RENDER_H;
+    const offCtx = offscreen.getContext('2d');
+    const imgData = offCtx.createImageData(RENDER_W, RENDER_H);
+
+    const dropCanvas = document.getElementById('drop-canvas');
+    const dropCtx = dropCanvas ? dropCanvas.getContext('2d') : null;
+
+    function resize() {
+      // Size coffee canvas to its own CSS-determined rect (respects width:77%)
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * devicePixelRatio;
+      canvas.height = rect.height * devicePixelRatio;
+
+      // Size drop canvas to the full slide
+      if (dropCanvas) {
+        const slideEl = canvas.closest('.slide');
+        if (slideEl) {
+          const sr = slideEl.getBoundingClientRect();
+          dropCanvas.width = sr.width * devicePixelRatio;
+          dropCanvas.height = sr.height * devicePixelRatio;
+        }
+      }
+    }
+
+    function render() {
+      const W = RENDER_W, H = RENDER_H;
+      const data = imgData.data;
+      const light = document.documentElement.getAttribute('data-theme') === 'light';
+      const t = frame * 0.016;
+      const surfNy = SURFACE / GH;
+
+      for (let py = 0; py < H; py++) {
+        const ny = py / H;
+        for (let px = 0; px < W; px++) {
+          const nx = px / W;
+          const gx = nx * (GW - 1);
+          const gy = ny * (GH - 1);
+          const gi = gx | 0, gj = gy | 0;
+          const gi1 = Math.min(gi+1, GW-1), gj1 = Math.min(gj+1, GH-1);
+          const fx = gx - gi, fy = gy - gj;
+
+          // Bilinear sample
+          const c = Math.min(1, Math.max(0,
+            (1-fx)*(1-fy)*d[IX(gi,gj)] + fx*(1-fy)*d[IX(gi1,gj)]
+            +(1-fx)*fy*d[IX(gi,gj1)] + fx*fy*d[IX(gi1,gj1)]));
+
+          const vu = (1-fx)*(1-fy)*u[IX(gi,gj)] + fx*(1-fy)*u[IX(gi1,gj)]
+                    +(1-fx)*fy*u[IX(gi,gj1)] + fx*fy*u[IX(gi1,gj1)];
+          const vv = (1-fx)*(1-fy)*v[IX(gi,gj)] + fx*(1-fy)*v[IX(gi1,gj)]
+                    +(1-fx)*fy*v[IX(gi,gj1)] + fx*fy*v[IX(gi1,gj1)];
+          const speed = Math.sqrt(vu*vu + vv*vv);
+
+          const idx = (py * W + px) * 4;
+
+          if (c < 0.02) {
+            data[idx] = data[idx+1] = data[idx+2] = 0; data[idx+3] = 0;
+            continue;
+          }
+
+          // Depth coloring
+          const depth = Math.max(0, ny - surfNy) / (1 - surfNy);
+          let r, g, b;
+          if (depth > 0.25) {
+            const dd = Math.min(1, (depth - 0.25) / 0.75);
+            r = 55 - dd*dd*40; g = 26 - dd*dd*20; b = 11 - dd*dd*9;
+          } else {
+            const dd = depth / 0.25;
+            r = 88 - dd*33; g = 45 - dd*19; b = 20 - dd*9;
+          }
+
+          // Density brightness
+          r *= 0.8 + c * 0.2; g *= 0.8 + c * 0.2; b *= 0.8 + c * 0.2;
+
+          // Specular at surface
+          const spec = Math.min(1, speed * 3) * Math.max(0, 1 - depth * 4);
+          r += spec * 45; g += spec * 38; b += spec * 20;
+
+          // Sheen
+          const sx = nx - 0.43 - Math.sin(t*0.04)*0.03;
+          const sy = ny - surfNy - 0.02;
+          const sd = sx*sx*3.5 + sy*sy*50;
+          if (sd < 0.13) {
+            const sv = ((0.13 - sd) / 0.13);
+            const sv2 = sv * sv;
+            r += sv2 * 155; g += sv2 * 135; b += sv2 * 95;
+          }
+
+          // Vignette
+          const vx = (nx - 0.5) * 2, vy = (ny - 0.75) * 2;
+          const vig = Math.min(0.18, (vx*vx + vy*vy) * 0.04);
+          r *= 1 - vig; g *= 1 - vig; b *= 1 - vig;
+
+          if (light) { r *= 1.3; g *= 1.25; b *= 1.2; }
+
+          // Solid alpha — heavy liquid, not smoke
+          let a;
+          if (c > 0.2) a = 255;
+          else if (c > 0.05) { const e = (c - 0.05) / 0.15; a = e*e*(3-2*e)*255; }
+          else a = 0;
+
+          data[idx]   = Math.min(255, r) | 0;
+          data[idx+1] = Math.min(255, g) | 0;
+          data[idx+2] = Math.min(255, b) | 0;
+          data[idx+3] = Math.min(255, a) | 0;
+        }
+      }
+
+      offCtx.putImageData(imgData, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Clip to mug interior shape
+      const cw = canvas.width, ch = canvas.height;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(cw*0.05, ch*0.03);
+      ctx.lineTo(cw*0.95, ch*0.03);
+      ctx.quadraticCurveTo(cw*0.99, ch*0.03, cw*0.99, ch*0.07);
+      ctx.lineTo(cw*0.96, ch*0.91);
+      ctx.quadraticCurveTo(cw*0.96, ch*0.98, cw*0.87, ch*0.98);
+      ctx.lineTo(cw*0.13, ch*0.98);
+      ctx.quadraticCurveTo(cw*0.04, ch*0.98, cw*0.04, ch*0.91);
+      ctx.lineTo(cw*0.01, ch*0.07);
+      ctx.quadraticCurveTo(cw*0.01, ch*0.03, cw*0.05, ch*0.03);
+      ctx.closePath();
+      ctx.clip();
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(offscreen, 0, 0, canvas.width, canvas.height);
+      const isLight = light;
+      const dpr = devicePixelRatio;
+
+      // Splash effects (stay inside mug clip)
+      for (const sp of splashes) {
+        const sx = sp.x * cw;
+        const sy = sp.y * ch;
+        const fade = Math.max(0, 1 - sp.life * 1.2);
+
+        // Expanding ripple ring
+        if (sp.ring > 0 && fade > 0) {
+          const rr = sp.ring * sp.r * 3 * dpr;
+          ctx.beginPath();
+          ctx.ellipse(sx, sy, rr, rr * 0.2, 0, 0, Math.PI * 2);
+          ctx.strokeStyle = isLight
+            ? `rgba(130,85,40,${fade * 0.35})`
+            : `rgba(165,110,55,${fade * 0.3})`;
+          ctx.lineWidth = Math.max(1, (1 - sp.life) * 2.5 * dpr);
+          ctx.stroke();
+
+          // Second ring trailing behind
+          if (sp.ring > 0.4) {
+            const rr2 = (sp.ring - 0.4) * sp.r * 3 * dpr;
+            ctx.beginPath();
+            ctx.ellipse(sx, sy, rr2, rr2 * 0.2, 0, 0, Math.PI * 2);
+            ctx.strokeStyle = isLight
+              ? `rgba(130,85,40,${fade * 0.18})`
+              : `rgba(165,110,55,${fade * 0.15})`;
+            ctx.lineWidth = Math.max(1, (1 - sp.life) * 1.5 * dpr);
+            ctx.stroke();
+          }
+        }
+
+        // Secondary droplets — tiny spheres arcing up then falling back
+        for (const sec of sp.secondary) {
+          if (sec.life > 1 || sec.y > sp.y + 0.02) continue;
+          const sdx = sec.x * cw;
+          const sdy = sec.y * ch;
+          const sdr = sec.r * dpr * Math.max(0, 1 - sec.life);
+          if (sdr < 0.5) continue;
+          ctx.beginPath();
+          ctx.arc(sdx, sdy, sdr, 0, Math.PI * 2);
+          ctx.fillStyle = isLight
+            ? `rgba(130,78,32,${0.8 * (1 - sec.life)})`
+            : `rgba(155,95,42,${0.75 * (1 - sec.life)})`;
+          ctx.fill();
+        }
+      }
+
+      ctx.restore(); // end mug clip
+
+      // ---- Render falling drops on full-slide drop-canvas ----
+      if (dropCtx && dropCanvas.width > 0) {
+        dropCtx.clearRect(0, 0, dropCanvas.width, dropCanvas.height);
+        const slideEl = canvas.closest('.slide');
+        if (slideEl) {
+          const mugRect = canvas.getBoundingClientRect();
+          const slideRect = slideEl.getBoundingClientRect();
+          // Map mug-space coords to drop-canvas pixel coords
+          const mugOffX = (mugRect.left - slideRect.left) * dpr;
+          const mugOffY = (mugRect.top - slideRect.top) * dpr;
+          const mugPxW = mugRect.width * dpr;
+          const mugPxH = mugRect.height * dpr;
+
+          for (const drop of drops) {
+            const dx = mugOffX + drop.x * mugPxW;
+            const dy = mugOffY + drop.y * mugPxH;
+            const dr = drop.r * dpr;
+            const spd = drop.vy;
+            const tailLen = dr * (1.5 + Math.min(3, spd * 800));
+
+            dropCtx.save();
+
+            // Tail — tapered streak above the drop
+            const tailGrad = dropCtx.createLinearGradient(dx, dy - dr - tailLen, dx, dy - dr * 0.3);
+            tailGrad.addColorStop(0, 'rgba(120,68,30,0)');
+            tailGrad.addColorStop(0.4, isLight ? 'rgba(110,60,25,0.2)' : 'rgba(140,80,35,0.2)');
+            tailGrad.addColorStop(1, isLight ? 'rgba(110,60,25,0.55)' : 'rgba(140,80,35,0.5)');
+            dropCtx.beginPath();
+            dropCtx.moveTo(dx, dy - dr - tailLen);
+            dropCtx.bezierCurveTo(
+              dx, dy - dr - tailLen * 0.5,
+              dx - dr * 0.6, dy - dr * 0.8,
+              dx - dr * 0.85, dy
+            );
+            dropCtx.arc(dx, dy, dr * 0.85, Math.PI, 0, true);
+            dropCtx.bezierCurveTo(
+              dx + dr * 0.6, dy - dr * 0.8,
+              dx, dy - dr - tailLen * 0.5,
+              dx, dy - dr - tailLen
+            );
+            dropCtx.closePath();
+            dropCtx.fillStyle = tailGrad;
+            dropCtx.fill();
+
+            // Drop body — sphere
+            const bg = dropCtx.createRadialGradient(dx - dr*0.15, dy - dr*0.12, dr*0.05, dx, dy, dr);
+            bg.addColorStop(0, isLight ? 'rgba(155,100,50,0.92)' : 'rgba(175,115,58,0.88)');
+            bg.addColorStop(0.6, isLight ? 'rgba(95,50,20,0.92)' : 'rgba(115,62,28,0.88)');
+            bg.addColorStop(1, isLight ? 'rgba(55,25,8,0.45)' : 'rgba(60,28,10,0.4)');
+            dropCtx.beginPath();
+            dropCtx.arc(dx, dy, dr, 0, Math.PI * 2);
+            dropCtx.fillStyle = bg;
+            dropCtx.fill();
+
+            // Specular highlight
+            const sg = dropCtx.createRadialGradient(dx-dr*0.25, dy-dr*0.28, 0, dx-dr*0.25, dy-dr*0.28, dr*0.35);
+            sg.addColorStop(0, 'rgba(255,248,235,0.6)');
+            sg.addColorStop(0.5, 'rgba(255,242,220,0.15)');
+            sg.addColorStop(1, 'rgba(255,240,210,0)');
+            dropCtx.beginPath();
+            dropCtx.arc(dx - dr*0.25, dy - dr*0.28, dr*0.35, 0, Math.PI * 2);
+            dropCtx.fillStyle = sg;
+            dropCtx.fill();
+
+            dropCtx.restore();
+          }
+        }
+      }
+    }
+
+    // Mouse stir
+    let mx=-1, my=-1, pmx=-1, pmy=-1;
+    canvas.style.pointerEvents = 'auto';
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      pmx=mx; pmy=my;
+      mx = ((e.clientX-rect.left)/rect.width)*GW;
+      my = ((e.clientY-rect.top)/rect.height)*GH;
+      if (pmx >= 0 && my > SURFACE-4) {
+        const dx=mx-pmx, dy=my-pmy;
+        const gi=mx|0, gj=my|0;
+        for (let dj=-3;dj<=3;dj++) for (let di=-3;di<=3;di++) {
+          const ii=gi+di, jj=gj+dj;
+          if (ii>0&&ii<GW-1&&jj>0&&jj<GH-1) {
+            const dd=Math.sqrt(di*di+dj*dj)+1;
+            u[IX(ii,jj)] += dx*5/dd; v[IX(ii,jj)] += dy*5/dd;
+          }
+        }
+      }
+    });
+    canvas.addEventListener('mouseleave', () => { mx=my=pmx=pmy=-1; });
+
+    let simTick = 0;
+    function loop() {
+      if (slides[current] && slides[current].querySelector('#coffee-canvas')) {
+        if (filling) {
+          const target = Math.floor(GH * P.surfacePct);
+
+          fillSurface -= 0.4;
+          if (fillSurface <= target) {
+            fillSurface = target;
+            fillSettle++;
+            if (fillSettle > 90) filling = false;
+          }
+
+          // Pure density paint — massive gradient band, cosine ease
+          for (let j = 0; j < GH; j++) {
+            const dist = j - fillSurface;
+            for (let i = 0; i < GW; i++) {
+              if (dist > 25) d[IX(i,j)] = 1.0;
+              else if (dist > 0) {
+                // Cosine interpolation over 25 cells — perfectly smooth
+                d[IX(i,j)] = 0.5 - 0.5 * Math.cos(Math.PI * dist / 25);
+              } else {
+                d[IX(i,j)] = 0;
+              }
+            }
+          }
+
+          SURFACE = Math.floor(fillSurface);
+          render();
+        } else {
+          updateDrops();
+          simTick++;
+          if (simTick % P.physTick === 0) { step(); }
+          render();
+        }
+      }
+      requestAnimationFrame(loop);
+    }
+
+    // ---- Control Panel ----
+    const panel = document.createElement('div');
+    panel.id = 'fluid-controls';
+    panel.innerHTML = `<div style="
+      position:fixed;top:8px;left:8px;z-index:10000;
+      background:rgba(10,10,15,0.88);border:1px solid rgba(255,255,255,0.12);
+      border-radius:8px;padding:10px 14px;font:11px/1.6 monospace;color:#ccc;
+      max-height:90vh;overflow-y:auto;min-width:220px;backdrop-filter:blur(8px);
+      user-select:none;
+    ">
+      <div style="font-weight:bold;color:#8b5cf6;margin-bottom:6px;font-size:12px;">
+        Fluid Tuner <span id="fp-grid" style="color:#666;font-weight:normal"></span>
+      </div>
+      <div id="fp-sliders"></div>
+      <button id="fp-reset" style="
+        margin-top:6px;padding:3px 10px;background:#6366f1;color:#fff;border:none;
+        border-radius:4px;cursor:pointer;font:11px monospace;
+      ">Reset Sim</button>
+      <button id="fp-drop" style="
+        margin-top:6px;margin-left:4px;padding:3px 10px;background:#8b5cf6;color:#fff;border:none;
+        border-radius:4px;cursor:pointer;font:11px monospace;
+      ">Drop Now</button>
+      <button id="fp-pour" style="
+        margin-top:6px;margin-left:4px;padding:3px 10px;background:#92400e;color:#fff;border:none;
+        border-radius:4px;cursor:pointer;font:11px monospace;
+      ">Pour</button>
+      <button id="fp-toggle-sim" style="
+        margin-top:6px;margin-left:4px;padding:3px 10px;background:#dc2626;color:#fff;border:none;
+        border-radius:4px;cursor:pointer;font:11px monospace;
+      ">Hide Sim</button>
+    </div>`;
+    document.body.appendChild(panel);
+
+    const sliderDefs = [
+      { key:'voxels', label:'Voxels', min:4, max:24, step:1, get:()=>GW/16, set:v=>{GW=v*16;GH=v*9;initGrid(true);document.getElementById('fp-grid').textContent=`(${GW}x${GH})`;} },
+      { key:'dt', label:'dt', min:0.01, max:0.15, step:0.005, get:()=>P.dt, set:v=>{P.dt=v;} },
+      { key:'damping', label:'Damping', min:0.990, max:0.9999, step:0.0001, get:()=>P.damping, set:v=>{P.damping=v;} },
+      { key:'gravity', label:'Gravity', min:0, max:0.05, step:0.001, get:()=>P.gravity, set:v=>{P.gravity=v;} },
+      { key:'visc', label:'Viscosity', min:0, max:0.001, step:0.00001, get:()=>P.visc, set:v=>{P.visc=v;} },
+      { key:'diff', label:'Diffusion', min:0, max:0.001, step:0.00001, get:()=>P.diff, set:v=>{P.diff=v;} },
+      { key:'surfacePct', label:'Coffee Level', min:0.08, max:0.96, step:0.01, get:()=>P.surfacePct, set:v=>{P.surfacePct=v;initGrid(true);} },
+      { key:'deepRecovery', label:'Deep Recov', min:0, max:0.1, step:0.001, get:()=>P.deepRecovery, set:v=>{P.deepRecovery=v;} },
+      { key:'surfRecovery', label:'Surf Recov', min:0, max:0.05, step:0.0005, get:()=>P.surfRecovery, set:v=>{P.surfRecovery=v;} },
+      { key:'aboveKill', label:'Above Kill', min:0, max:1, step:0.05, get:()=>P.aboveKill, set:v=>{P.aboveKill=v;} },
+      { key:'aboveKillHard', label:'Above Hard', min:0, max:1, step:0.05, get:()=>P.aboveKillHard, set:v=>{P.aboveKillHard=v;} },
+      { key:'impactMult', label:'Impact Str', min:50, max:1000, step:10, get:()=>P.impactMult, set:v=>{P.impactMult=v;} },
+      { key:'craterForce', label:'Crater F', min:0.5, max:5, step:0.1, get:()=>P.craterForce, set:v=>{P.craterForce=v;} },
+      { key:'splashUp', label:'Splash Up', min:0, max:2, step:0.05, get:()=>P.splashUp, set:v=>{P.splashUp=v;} },
+      { key:'dropGravity', label:'Drop Grav', min:0.00001, max:0.0003, step:0.00001, get:()=>P.dropGravity, set:v=>{P.dropGravity=v;} },
+      { key:'dropInterval', label:'Drip Rate', min:60, max:900, step:30, get:()=>P.dropInterval, set:v=>{P.dropInterval=v;} },
+      { key:'physTick', label:'Phys Tick', min:1, max:6, step:1, get:()=>P.physTick, set:v=>{P.physTick=v;} },
+      { key:'mugW', label:'Mug W %', min:15, max:50, step:1, get:()=>parseInt(document.getElementById('mug-wrap').style.width), set:v=>{document.getElementById('mug-wrap').style.width=v+'%';resize();} },
+      { key:'mugH', label:'Mug H %', min:30, max:80, step:1, get:()=>parseInt(document.getElementById('mug-wrap').style.height), set:v=>{document.getElementById('mug-wrap').style.height=v+'%';resize();} },
+      { key:'coffeeW', label:'Coffee W %', min:50, max:100, step:1, get:()=>parseInt(canvas.style.width), set:v=>{canvas.style.width=v+'%';resize();} },
+      { key:'svgW', label:'SVG W %', min:80, max:140, step:1, get:()=>{const s=document.querySelector('#mug-wrap > svg:nth-of-type(1)');return parseInt(s.style.width);}, set:v=>{document.querySelector('#mug-wrap > svg:nth-of-type(1)').style.width=v+'%';} },
+      { key:'mugR', label:'Mug Right %', min:0, max:20, step:1, get:()=>parseInt(document.getElementById('mug-wrap').style.right), set:v=>{document.getElementById('mug-wrap').style.right=v+'%';resize();} },
+    ];
+
+    const container = document.getElementById('fp-sliders');
+    const valSpans = {};
+    for (const s of sliderDefs) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:4px;margin:2px 0;';
+      const lbl = document.createElement('span');
+      lbl.style.cssText = 'width:72px;flex-shrink:0;color:#999;font-size:10px;';
+      lbl.textContent = s.label;
+      const inp = document.createElement('input');
+      inp.type = 'range'; inp.min = s.min; inp.max = s.max; inp.step = s.step;
+      inp.value = s.get();
+      inp.style.cssText = 'flex:1;height:14px;accent-color:#6366f1;cursor:pointer;';
+      const val = document.createElement('span');
+      val.style.cssText = 'width:52px;text-align:right;font-size:10px;color:#8b5cf6;flex-shrink:0;';
+      val.textContent = Number(s.get()).toPrecision(4);
+      valSpans[s.key] = { inp, val, def: s };
+      inp.addEventListener('input', () => {
+        const n = Number(inp.value);
+        s.set(n);
+        val.textContent = n < 0.01 ? n.toExponential(1) : Number(n).toPrecision(4);
+      });
+      row.appendChild(lbl); row.appendChild(inp); row.appendChild(val);
+      container.appendChild(row);
+    }
+
+    document.getElementById('fp-grid').textContent = `(${GW}x${GH})`;
+    document.getElementById('fp-reset').onclick = () => {
+      initGrid(true);
+      for (const k in valSpans) {
+        valSpans[k].inp.value = valSpans[k].def.get();
+        const n = valSpans[k].def.get();
+        valSpans[k].val.textContent = n < 0.01 ? n.toExponential(1) : Number(n).toPrecision(4);
+      }
+      document.getElementById('fp-grid').textContent = `(${GW}x${GH})`;
+    };
+    document.getElementById('fp-drop').onclick = () => {
+      const slideEl = canvas.closest('.slide');
+      const mugRect = canvas.getBoundingClientRect();
+      const slideRect = slideEl ? slideEl.getBoundingClientRect() : mugRect;
+      const spawnY = -((mugRect.top - slideRect.top) / mugRect.height) - 0.03;
+      drops.push({ x: 0.15+Math.random()*0.55, y:spawnY, vy:0.0003, r:12+Math.random()*6 });
+    };
+    document.getElementById('fp-pour').onclick = () => {
+      initGrid(false);
+    };
+    document.getElementById('fp-toggle-sim').onclick = () => {
+      const btn = document.getElementById('fp-toggle-sim');
+      if (canvas.style.display === 'none') {
+        canvas.style.display = '';
+        btn.textContent = 'Hide Sim';
+        btn.style.background = '#dc2626';
+      } else {
+        canvas.style.display = 'none';
+        btn.textContent = 'Show Sim';
+        btn.style.background = '#16a34a';
+      }
+    };
+
+    // Hidden by default — Cmd+. to toggle debug panel
+    panel.style.display = 'none';
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.code === 'Period') {
+        e.preventDefault();
+        panel.style.display = panel.style.display === 'none' ? '' : 'none';
+      }
+    });
+
+    resize();
+    window.addEventListener('resize', resize);
+    loop();
+  })();
+})();
+</script>
+</body>
+</html>
