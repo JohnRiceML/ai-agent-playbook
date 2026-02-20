@@ -94,6 +94,8 @@ This playbook is based on real production experience shipping multiple SaaS prod
 
 This repo accompanies the talk **"Building with a Team of AI Developer Agents"** at [No-Code Coffee](https://www.nocodecoffee.com/) (Feb 19, 2026).
 
+**[View the slide deck](https://johnriceml.github.io/ai-agent-playbook/talk/slides.html)**
+
 Key takeaway: AI solves the *how*, not the *what*. Your job is knowing what to build, how to architect it, and what "done" looks like. The agents handle implementation. Your job got more interesting, not less.
 
 ## Resources
